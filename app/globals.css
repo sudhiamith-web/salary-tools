@@ -41,4 +41,15 @@
     @apply border-2 border-gold/60 text-gold bg-gold/5 rounded px-4 py-3 text-sm inline-block;
     transform: rotate(-0.6deg);
   }
+
+  /* Bright tinted callouts, matching the vibrant reference style */
+  .callout-info {
+    @apply bg-accentTint border border-accent/20 rounded-lg px-5 py-4;
+  }
+  .callout-insight {
+    @apply bg-insightTint border border-insight/20 rounded-lg px-5 py-4;
+  }
+  .hero-box {
+    @apply bg-accentTint border border-accent/20 rounded-xl px-6 py-5;
+  }
 }

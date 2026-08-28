@@ -33,6 +33,12 @@ export const tools: ToolMeta[] = [
     category: "Salary & Tax",
   },
   {
+    slug: "advance-tax-calculator",
+    name: "Advance Tax Calculator",
+    shortDesc: "Check your quarterly installments and 234B/234C penalties.",
+    category: "Salary & Tax",
+  },
+  {
     slug: "tds-calculator",
     name: "TDS on Salary Calculator",
     shortDesc: "Estimate monthly TDS withheld from your salary.",
