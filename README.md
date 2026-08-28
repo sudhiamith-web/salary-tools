@@ -1,18 +1,13 @@
 # Salary-Tools
 
 Salary, tax and HR calculators for Indian professionals. Built with Next.js
-14 (App Router) + Tailwind CSS. Live at salary-tools.com.
+14 (App Router) + Tailwind CSS + Recharts. Live at salary-tools.com.
 
 ## ⚠️ Upload instructions (read this before pushing to GitHub)
 
-When you upload this to GitHub, upload the **contents** of this folder
-(package.json, app/, lib/, components/, netlify.toml, etc.) directly into
-the repo root — NOT this folder itself as a subfolder. If GitHub shows a
-folder like `salary-tools/` sitting inside the repo with everything nested
-one level down, Netlify's build will fail to find package.json. This
-exact mistake cost real time on the first deploy — the fix was setting a
-"Base directory" in Netlify, which is extra complexity you don't need if
-you upload correctly the first time.
+Upload the CONTENTS of this folder directly into the repo root — NOT this
+folder itself as a subfolder. If GitHub shows a nested folder inside the
+repo, Netlify's build will fail to find package.json.
 
 ## Run it locally
 
@@ -21,22 +16,18 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000.
-
 ## Deploy to Netlify
 
-This repo includes `netlify.toml`, which tells Netlify exactly how to
-build (`npm run build`, publish `.next`, using `@netlify/plugin-nextjs`).
-As long as this file sits at the repo root and the Netlify UI's own Build
-command / Publish directory fields are left BLANK (so they don't override
-the file), the build should work without manual configuration.
+This repo includes `netlify.toml` (build command, publish directory,
+`@netlify/plugin-nextjs`). Leave Netlify's own UI build-setting fields
+blank so they don't override the file.
 
 ## Project structure
 
 ```
 app/
-  layout.tsx
-  page.tsx
+  layout.tsx        — shell + SiteNav dropdown
+  page.tsx           — homepage, pulls tool list from lib/tools.ts
   tools/
     in-hand-salary-calculator/page.tsx
     hra-exemption-calculator/page.tsx
@@ -44,40 +35,64 @@ app/
     gratuity-calculator/page.tsx
     tds-calculator/page.tsx
 lib/
+  tools.ts           — SINGLE SOURCE OF TRUTH for live tools (nav, homepage,
+                        related-tools cross-links all read from here). Add
+                        a tool here only once it's actually live — never
+                        list unbuilt tools to visitors.
   calculators/
-    salary.ts      — CTC → in-hand salary, new-regime tax logic
-    hra.ts         — Section 10(13A) HRA exemption logic
-    oldRegime.ts   — old regime slabs, 80C/80D/HRA deductions, 87A rebate
-    gratuity.ts    — Payment of Gratuity Act 1972, Section 10(10) exemption
+    salary.ts        — CTC → in-hand salary, new-regime tax logic
+    hra.ts            — Section 10(13A) HRA exemption logic
+    oldRegime.ts      — old regime slabs, 80C/80D/HRA deductions, 87A rebate
+    gratuity.ts       — Payment of Gratuity Act 1972 + Labour Codes
+                        (fixed-term 1-yr eligibility, 50% wage rule),
+                        Section 10(10) exemption
 components/
-  PayslipCard.tsx   — result card for the salary calculator
-  HRACard.tsx       — result card for the HRA calculator
-  RingChart.tsx     — dependency-free SVG donut/ring visual (no chart library)
-  Badge.tsx         — small pill component for regime labels and tags
+  PayslipCard.tsx     — result card, salary calculator
+  HRACard.tsx         — result card, HRA calculator
+  RingChart.tsx       — dependency-free SVG donut (used for simple 2-slice splits)
+  Badge.tsx           — pill component for regime/category labels
+  FAQAccordion.tsx    — expandable FAQ + FAQPage JSON-LD schema
+  ProjectionSection.tsx — Recharts area chart + table, generic sensitivity/
+                        projection view reused across tools
+  ToolArticle.tsx     — written-explainer wrapper + FormulaBox callout
+  RelatedTools.tsx     — cross-links, reads only from lib/tools.ts
+  SiteNav.tsx          — header dropdown, reads only from lib/tools.ts
 netlify.toml
 ```
 
-## Adding the next calculator
+## The standard tool-page template
 
-1. Add calculation logic to `lib/calculators/` — a new file, pure
-   functions, no UI.
-2. Create `app/tools/<slug>/page.tsx` — form on the left, a receipt-style
-   result card on the right (see `HRACard.tsx` or `PayslipCard.tsx` as a
-   template — reuse the `.ledger-row`, `.receipt-edge-top/bottom`, and
-   `.stamp-note` classes already defined in `globals.css`).
-3. Add the tool to the `tools` array in `app/page.tsx` and flip
-   `live: false` → `live: true`.
+Every tool page (new or existing) follows this structure top to bottom:
+1. Calculator — inputs + result card (existing pattern, keep using it)
+2. Projection/sensitivity section — `ProjectionSection` (single series) or
+   a bespoke Recharts chart if you need multiple series (see the Old vs
+   New Regime page for a two-line example)
+3. Written explainer — `ToolArticle` + `FormulaBox`, ORIGINAL content only,
+   verify statutory facts before writing anything presented as current law
+4. FAQ — `FAQAccordion`, 4-6 original questions per tool
+5. `RelatedTools` cross-links at the bottom
+
+When adding a new tool: build the calculator first, add it to
+`lib/tools.ts` ONLY once it's actually live, then add the four sections
+above using the existing tools as templates.
+
+## Fact-checking discipline
+
+Any statutory figure (tax slabs, exemption caps, statutory percentages)
+that gets written into FAQ or article copy must be verified against a
+current source before publishing — don't copy figures from competitor
+sites without checking. Example: the Labour Codes took legal effect
+21 November 2025 and already changed real gratuity rules (fixed-term
+eligibility, the 50% wage rule) even though Central/state Rules are
+still being finalized through 2026 — verified Aug 2026, re-check
+periodically since rules are still rolling out.
 
 ## Known simplifications
 
 - Neither tax engine (old or new regime) implements surcharge (income >
   ₹50L) or marginal relief near the rebate thresholds.
-- Old regime engine only models the general slabs (individuals under 60).
+- Old regime engine only models general slabs (individuals under 60).
   Senior/super-senior citizen slabs are separate and not yet modeled.
 - Professional tax default is a flat approximation, not state-specific.
-- Gratuity calculator doesn't yet distinguish government vs
-  non-government employees (government employees get full tax exemption
-  regardless of amount — currently everyone is treated as non-government).
-- TDS calculator assumes even monthly withholding across the remaining
-  months — real employer TDS schedules often front-load or adjust
-  through the year based on declared investments and Form 12BB.
+- TDS calculator assumes even monthly withholding — real employer
+  schedules often front-load or adjust through the year.

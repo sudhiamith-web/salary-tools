@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
+import SiteNav from "@/components/SiteNav";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -41,7 +42,7 @@ export default function RootLayout({
               Salary-Tools<span className="text-ledger">.</span>
             </Link>
             <nav className="text-sm text-charcoal/70 flex gap-6">
-              <Link href="/">Tools</Link>
+              <SiteNav />
             </nav>
           </div>
         </header>

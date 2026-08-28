@@ -1,10 +1,22 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+} from "recharts";
 import { computeNewRegimeTax, formatINR } from "@/lib/calculators/salary";
 import { computeOldRegimeTax, SECTION_80C_LIMIT } from "@/lib/calculators/oldRegime";
 import Badge from "@/components/Badge";
 import RingChart from "@/components/RingChart";
+import ToolArticle, { FormulaBox } from "@/components/ToolArticle";
+import FAQAccordion from "@/components/FAQAccordion";
+import RelatedTools from "@/components/RelatedTools";
 
 export default function OldVsNewRegimePage() {
   const [grossIncome, setGrossIncome] = useState(1200000);
@@ -31,6 +43,24 @@ export default function OldVsNewRegimePage() {
   const takeHomePercent =
     ((grossIncome - Math.min(oldRegime.totalTax, newRegime.totalTax)) / grossIncome) * 100;
 
+  const totalDeductions =
+    section80C + section80D + hraExemption + otherDeductions;
+
+  const comparisonChartData = useMemo(() => {
+    const incomeLevels = [600000, 900000, 1200000, 1500000, 1800000, 2400000, 3000000];
+    return incomeLevels.map((income) => ({
+      label: `₹${income / 100000}L`,
+      oldTax: computeOldRegimeTax({
+        grossAnnualIncome: income,
+        section80CDeduction: section80C,
+        section80DDeduction: section80D,
+        hraExemption,
+        otherDeductions,
+      }).totalTax,
+      newTax: computeNewRegimeTax(income).totalTax,
+    }));
+  }, [section80C, section80D, hraExemption, otherDeductions]);
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">
       <h1 className="text-3xl mb-2">Old vs New Tax Regime Calculator</h1>
@@ -39,7 +69,7 @@ export default function OldVsNewRegimePage() {
         on your actual deductions — not a rule of thumb.
       </p>
 
-      <div className="grid lg:grid-cols-[1fr_420px] gap-10">
+      <div className="grid lg:grid-cols-[1fr_420px] gap-10 mb-20">
         <div className="space-y-6 max-w-md">
           <Field label="Gross annual income" value={grossIncome} onChange={setGrossIncome} suffix="₹ / year" />
           <Field
@@ -116,6 +146,99 @@ export default function OldVsNewRegimePage() {
           <div className="receipt-edge-bottom" />
         </div>
       </div>
+
+      <div className="max-w-2xl mb-20">
+        <h3 className="text-xl mb-1">Tax under both regimes, across income levels</h3>
+        <p className="text-sm text-charcoal/60 mb-4">
+          Using your current deductions ({formatINR(totalDeductions)}/year total) held constant.
+        </p>
+        <div className="h-64 -ml-2 mb-4">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={comparisonChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#16283A" strokeOpacity={0.08} vertical={false} />
+              <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#1C2321", opacity: 0.6 }} axisLine={false} tickLine={false} />
+              <YAxis
+                tick={{ fontSize: 11, fill: "#1C2321", opacity: 0.6 }}
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={(v) => `₹${Math.round(v / 1000)}k`}
+                width={48}
+              />
+              <Tooltip
+                formatter={(value: number, name: string) => [formatINR(value), name === "oldTax" ? "Old regime" : "New regime"]}
+                contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid rgba(22,40,58,0.15)" }}
+              />
+              <Line type="monotone" dataKey="oldTax" stroke="#16283A" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="newTax" stroke="#1F6F54" strokeWidth={2} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="flex gap-4 text-xs text-charcoal/60">
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: "#16283A" }} />
+            Old regime
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: "#1F6F54" }} />
+            New regime
+          </span>
+        </div>
+      </div>
+
+      <div className="mb-20">
+        <ToolArticle title="Why the 'better' regime depends on your deductions, not just your income">
+          <p>
+            The new regime offers lower tax rates but allows almost no
+            deductions. The old regime has higher rates but lets you reduce
+            taxable income through 80C, 80D, HRA, and home loan interest.
+            Whether the old regime wins depends entirely on how large your
+            total deductions are relative to your income:
+          </p>
+          <FormulaBox>
+            Old regime wins when: total deductions are large enough that the
+            tax saved exceeds what the new regime's lower rates already save you
+          </FormulaBox>
+          <p>
+            As a rough pattern: someone with minimal deductions (no HRA, no
+            80C investments, no home loan) almost always does better on the
+            new regime. Someone with a home loan, full 80C utilization, and
+            HRA exemption often breaks even around ₹15-20L income, sometimes
+            favoring the old regime above that — but there's no universal
+            number, which is exactly why calculating your specific numbers
+            matters more than a rule of thumb.
+          </p>
+        </ToolArticle>
+      </div>
+
+      <div className="mb-20">
+        <h2 className="text-2xl mb-4">Frequently asked questions</h2>
+        <FAQAccordion
+          items={[
+            {
+              question: "Which regime is the default if I don't choose?",
+              answer:
+                "The new tax regime is the default regime for salaried individuals since FY 2023-24. If you want the old regime, you need to explicitly opt for it, typically by informing your employer at the start of the financial year.",
+            },
+            {
+              question: "Can I switch between regimes every year?",
+              answer:
+                "Salaried individuals without business income can switch regimes each financial year when filing their return. If you have business or professional income, switching back to the old regime after opting for the new one has restrictions — check with a tax professional if this applies to you.",
+            },
+            {
+              question: "Does the new regime allow any deductions at all?",
+              answer:
+                "Very few. The standard deduction (₹75,000) and employer NPS contributions under Section 80CCD(2) are among the exceptions still allowed under the new regime. Popular deductions like 80C, 80D, and HRA are not available.",
+            },
+            {
+              question: "I don't have a home loan or HRA — does the old regime ever make sense?",
+              answer:
+                "It's less likely, but not impossible — it depends on how much you're investing under 80C and 80D. Run your actual numbers through this calculator rather than assuming; the crossover point shifts a lot based on your specific deduction total.",
+            },
+          ]}
+        />
+      </div>
+
+      <RelatedTools currentSlug="old-vs-new-regime-calculator" />
     </div>
   );
 }

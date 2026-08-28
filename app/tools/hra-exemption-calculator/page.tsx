@@ -3,12 +3,16 @@
 import { useMemo, useState } from "react";
 import { computeHRAExemption } from "@/lib/calculators/hra";
 import HRACard from "@/components/HRACard";
+import ProjectionSection, { ProjectionPoint } from "@/components/ProjectionSection";
+import ToolArticle, { FormulaBox } from "@/components/ToolArticle";
+import FAQAccordion from "@/components/FAQAccordion";
+import RelatedTools from "@/components/RelatedTools";
 
 type Mode = "monthly" | "annual";
 
 export default function HRAExemptionCalculatorPage() {
   const [mode, setMode] = useState<Mode>("monthly");
-  const [basic, setBasic] = useState(40000); // shown in current mode's units
+  const [basic, setBasic] = useState(40000);
   const [hraReceived, setHraReceived] = useState(20000);
   const [rentPaid, setRentPaid] = useState(22000);
   const [isMetro, setIsMetro] = useState(true);
@@ -32,6 +36,22 @@ export default function HRAExemptionCalculatorPage() {
     });
   }, [basic, hraReceived, rentPaid, isMetro, mode]);
 
+  const projectionData: ProjectionPoint[] = useMemo(() => {
+    const factor = mode === "monthly" ? 12 : 1;
+    const rentLevels = mode === "monthly"
+      ? [10000, 15000, 20000, 25000, 30000, 40000, 50000]
+      : [120000, 180000, 240000, 300000, 360000, 480000, 600000];
+    return rentLevels.map((r) => ({
+      label: mode === "monthly" ? `₹${r / 1000}k/mo` : `₹${r / 100000}L/yr`,
+      value: computeHRAExemption({
+        basicAnnual: basic * factor,
+        hraReceivedAnnual: hraReceived * factor,
+        rentPaidAnnual: r * factor,
+        isMetro,
+      }).exemptAnnual,
+    }));
+  }, [basic, hraReceived, isMetro, mode]);
+
   const unit = mode === "monthly" ? "₹ / month" : "₹ / year";
 
   return (
@@ -47,7 +67,7 @@ export default function HRAExemptionCalculatorPage() {
         the gross amount instead.
       </div>
 
-      <div className="grid lg:grid-cols-[1fr_380px] gap-10">
+      <div className="grid lg:grid-cols-[1fr_380px] gap-10 mb-20">
         <div className="space-y-6 max-w-md">
           <div>
             <span className="text-sm font-medium text-ink block mb-1.5">
@@ -106,6 +126,70 @@ export default function HRAExemptionCalculatorPage() {
 
         <HRACard result={result} />
       </div>
+
+      <div className="max-w-2xl mb-20">
+        <ProjectionSection
+          title="How your exemption changes with rent"
+          data={projectionData}
+          columnLabel="Rent paid"
+          valueLabel="Exempt from tax (annual)"
+        />
+      </div>
+
+      <div className="mb-20">
+        <ToolArticle title="How the HRA exemption is actually calculated">
+          <p>
+            Section 10(13A) exempts the LEAST of three amounts — not all of
+            your HRA, and not automatically the full rent you pay either:
+          </p>
+          <FormulaBox>
+            Exempt HRA = MIN(actual HRA received, rent paid − 10% of basic,
+            50% or 40% of basic)
+          </FormulaBox>
+          <p>
+            The third condition is why city matters: employees in Delhi,
+            Mumbai, Kolkata, or Chennai get a 50%-of-basic ceiling, while
+            everyone else is capped at 40%. Whatever HRA isn't exempt under
+            these rules still gets taxed as regular salary income.
+          </p>
+          <p>
+            This only helps you if you're on the old tax regime — the new
+            regime doesn't offer this exemption at all, so if you've moved
+            to the new regime, this calculator's result becomes purely
+            informational rather than something you can actually claim.
+          </p>
+        </ToolArticle>
+      </div>
+
+      <div className="mb-20">
+        <h2 className="text-2xl mb-4">Frequently asked questions</h2>
+        <FAQAccordion
+          items={[
+            {
+              question: "Can I claim HRA exemption if I don't pay rent?",
+              answer:
+                "No. The exemption is tied to actual rent paid — if you live rent-free (e.g. with family, in your own home) you can't claim HRA exemption even if your salary includes an HRA component.",
+            },
+            {
+              question: "What if my city isn't Delhi, Mumbai, Kolkata, or Chennai?",
+              answer:
+                "You're treated as non-metro, which caps the third condition at 40% of basic instead of 50%. This applies even to large cities like Bangalore, Pune, or Hyderabad — the metro classification for this specific rule is limited to those four cities.",
+            },
+            {
+              question: "Do I need rent receipts to claim this?",
+              answer:
+                "Yes, and if your annual rent exceeds ₹1,00,000, you'll also need your landlord's PAN for your employer to process the exemption without it being disallowed.",
+            },
+            {
+              question: "Can I claim HRA exemption on the new tax regime?",
+              answer:
+                "No — HRA exemption is only available under the old tax regime. If you've chosen the new regime, your full HRA is taxed as regular income regardless of rent paid.",
+            },
+          ]}
+        />
+      </div>
+
+      <RelatedTools currentSlug="hra-exemption-calculator" />
     </div>
   );
 }

@@ -1,42 +1,5 @@
 import Link from "next/link";
-
-const tools = [
-  {
-    slug: "in-hand-salary-calculator",
-    name: "In-Hand Salary Calculator",
-    desc: "Turn your CTC into a real monthly payslip breakup.",
-    live: true,
-  },
-  {
-    slug: "hra-exemption-calculator",
-    name: "HRA Exemption Calculator",
-    desc: "How much of your HRA is actually tax-free.",
-    live: true,
-  },
-  {
-    slug: "old-vs-new-regime-calculator",
-    name: "Old vs New Tax Regime Calculator",
-    desc: "See your exact tax under both regimes, side by side.",
-    live: true,
-  },
-  {
-    slug: "gratuity-calculator",
-    name: "Gratuity Calculator",
-    desc: "What you're owed after 5+ years of service.",
-    live: true,
-  },
-  { slug: "pf-calculator", name: "EPF Calculator", desc: "Track your PF corpus and employer matching.", live: false },
-  { slug: "leave-encashment-calculator", name: "Leave Encashment Calculator", desc: "Cash value of your unused leave.", live: false },
-  { slug: "notice-pay-calculator", name: "Notice Pay Calculator", desc: "What a shorter notice period costs you.", live: false },
-  {
-    slug: "tds-calculator",
-    name: "TDS on Salary Calculator",
-    desc: "Estimate monthly TDS withheld from your salary.",
-    live: true,
-  },
-  { slug: "salary-hike-calculator", name: "Salary Hike Calculator", desc: "What that hike percentage means in real money.", live: false },
-  { slug: "take-home-calculator", name: "Take-Home Pay Calculator", desc: "State-wise professional tax adjusted take-home.", live: false },
-];
+import { tools } from "@/lib/tools";
 
 export default function Home() {
   return (
@@ -60,33 +23,16 @@ export default function Home() {
           Calculators
         </h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {tools.map((tool) =>
-            tool.live ? (
-              <Link
-                key={tool.slug}
-                href={`/tools/${tool.slug}`}
-                className="block rounded-lg border border-ink/10 bg-white/40 p-5 hover:border-ledger/50 hover:bg-white/70 transition-colors"
-              >
-                <h3 className="font-display text-lg text-ink mb-1">
-                  {tool.name}
-                </h3>
-                <p className="text-sm text-charcoal/60">{tool.desc}</p>
-              </Link>
-            ) : (
-              <div
-                key={tool.slug}
-                className="rounded-lg border border-dashed border-ink/15 p-5 opacity-60"
-              >
-                <h3 className="font-display text-lg text-ink mb-1">
-                  {tool.name}
-                </h3>
-                <p className="text-sm text-charcoal/60">{tool.desc}</p>
-                <p className="text-xs text-gold mt-3 font-medium">
-                  Coming soon
-                </p>
-              </div>
-            )
-          )}
+          {tools.map((tool) => (
+            <Link
+              key={tool.slug}
+              href={`/tools/${tool.slug}`}
+              className="block rounded-lg border border-ink/10 bg-white/40 p-5 hover:border-ledger/50 hover:bg-white/70 transition-colors"
+            >
+              <h3 className="font-display text-lg text-ink mb-1">{tool.name}</h3>
+              <p className="text-sm text-charcoal/60">{tool.shortDesc}</p>
+            </Link>
+          ))}
         </div>
       </section>
     </div>
