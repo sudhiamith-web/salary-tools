@@ -174,7 +174,7 @@ function Field({
           value={value}
           step={step}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full rounded-md border border-ink/15 bg-white px-3 py-2 font-mono text-ink focus:outline-none focus:ring-2 focus:ring-ledger/40 focus:border-ledger"
+          className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-ink focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
         />
         <span className="text-xs text-charcoal/50 whitespace-nowrap">{suffix}</span>
       </div>

@@ -8,13 +8,13 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "#16283A",
-        paper: "#EEF0E9",
-        paperDark: "#E2E5DB",
-        ledger: "#1F6F54",
-        rust: "#B5482A",
-        gold: "#B8923F",
-        charcoal: "#1C2321",
+        ink: "#0F172A",
+        paper: "#F7F9FC",
+        paperDark: "#EDF1F7",
+        ledger: "#0E9F6E",
+        rust: "#E02424",
+        gold: "#C27803",
+        charcoal: "#334155",
         accent: "#2E5EFF",
         accentTint: "#EAF0FF",
         insight: "#7C3AED",

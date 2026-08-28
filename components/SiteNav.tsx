@@ -30,7 +30,7 @@ export default function SiteNav() {
         <span className={`text-xs transition-transform ${open ? "rotate-180" : ""}`}>▾</span>
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-72 bg-white border border-ink/10 rounded-lg shadow-lg py-2 z-50">
+        <div className="absolute right-0 top-full mt-2 w-72 bg-white border border-slate-200 rounded-xl shadow-xl py-2 z-50">
           {categories.map((category) => (
             <div key={category}>
               <p className="px-4 pt-2 pb-1 text-xs uppercase tracking-widest text-charcoal/40 font-medium">
@@ -43,7 +43,7 @@ export default function SiteNav() {
                     key={tool.slug}
                     href={`/tools/${tool.slug}`}
                     onClick={() => setOpen(false)}
-                    className="block px-4 py-2 text-sm text-charcoal/80 hover:bg-paper hover:text-ink"
+                    className="block px-4 py-2 text-sm text-charcoal/80 hover:bg-accentTint hover:text-accent"
                   >
                     {tool.name}
                   </Link>

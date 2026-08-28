@@ -61,7 +61,7 @@ export default function HRAExemptionCalculatorPage() {
         Find out how much of your House Rent Allowance is actually tax-free
         under Section 10(13A).
       </p>
-      <div className="stamp-note mb-10">
+      <div className="callout-warn mb-10 max-w-xl">
         Applies only under the <strong>Old Tax Regime</strong>. If you're on
         the new regime, HRA exemption doesn't apply — your salary is taxed on
         the gross amount instead.
@@ -73,11 +73,11 @@ export default function HRAExemptionCalculatorPage() {
             <span className="text-sm font-medium text-ink block mb-1.5">
               Enter figures as
             </span>
-            <div className="inline-flex rounded-md border border-ink/15 overflow-hidden">
+            <div className="inline-flex rounded-md border border-slate-300 overflow-hidden">
               <button
                 onClick={() => switchMode("monthly")}
                 className={`px-4 py-1.5 text-sm ${
-                  mode === "monthly" ? "bg-ink text-paper" : "bg-white text-charcoal/70"
+                  mode === "monthly" ? "bg-accent text-white" : "bg-white text-charcoal/70"
                 }`}
               >
                 Monthly
@@ -85,7 +85,7 @@ export default function HRAExemptionCalculatorPage() {
               <button
                 onClick={() => switchMode("annual")}
                 className={`px-4 py-1.5 text-sm ${
-                  mode === "annual" ? "bg-ink text-paper" : "bg-white text-charcoal/70"
+                  mode === "annual" ? "bg-accent text-white" : "bg-white text-charcoal/70"
                 }`}
               >
                 Annual
@@ -99,11 +99,11 @@ export default function HRAExemptionCalculatorPage() {
 
           <div>
             <span className="text-sm font-medium text-ink block mb-1.5">City type</span>
-            <div className="inline-flex rounded-md border border-ink/15 overflow-hidden">
+            <div className="inline-flex rounded-md border border-slate-300 overflow-hidden">
               <button
                 onClick={() => setIsMetro(true)}
                 className={`px-4 py-1.5 text-sm ${
-                  isMetro ? "bg-ink text-paper" : "bg-white text-charcoal/70"
+                  isMetro ? "bg-accent text-white" : "bg-white text-charcoal/70"
                 }`}
               >
                 Metro
@@ -111,7 +111,7 @@ export default function HRAExemptionCalculatorPage() {
               <button
                 onClick={() => setIsMetro(false)}
                 className={`px-4 py-1.5 text-sm ${
-                  !isMetro ? "bg-ink text-paper" : "bg-white text-charcoal/70"
+                  !isMetro ? "bg-accent text-white" : "bg-white text-charcoal/70"
                 }`}
               >
                 Non-metro
@@ -214,7 +214,7 @@ function Field({
           value={value}
           step={500}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full rounded-md border border-ink/15 bg-white px-3 py-2 font-mono text-ink focus:outline-none focus:ring-2 focus:ring-ledger/40 focus:border-ledger"
+          className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-ink focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
         />
         <span className="text-xs text-charcoal/50 whitespace-nowrap">{suffix}</span>
       </div>

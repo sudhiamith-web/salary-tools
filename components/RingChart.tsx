@@ -1,7 +1,7 @@
 export default function RingChart({
   percent,
   color,
-  trackColor = "#E2E5DB",
+  trackColor = "#E2E8F0",
   label,
   sublabel,
   size = 110,

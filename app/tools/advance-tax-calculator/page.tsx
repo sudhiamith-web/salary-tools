@@ -71,7 +71,7 @@ export default function AdvanceTaxCalculatorPage() {
                   className={`text-left px-4 py-3 rounded-lg border-2 text-sm transition-colors ${
                     category === c
                       ? "bg-accentTint border-accent text-ink"
-                      : "bg-white border-ink/10 text-charcoal/70"
+                      : "bg-white border-slate-200 text-charcoal/70"
                   }`}
                 >
                   <span className="font-medium block">{categoryLabels[c].title}</span>
@@ -125,19 +125,19 @@ export default function AdvanceTaxCalculatorPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-white border border-ink/10 rounded-lg px-4 py-3">
+            <div className="bg-white border border-slate-200 rounded-lg px-4 py-3">
               <p className="text-xs text-charcoal/50 mb-1">Net advance tax payable</p>
               <p className="font-mono text-ink text-lg">{formatINR(result.netAdvanceTaxPayable)}</p>
             </div>
-            <div className="bg-white border border-ink/10 rounded-lg px-4 py-3">
+            <div className="bg-white border border-slate-200 rounded-lg px-4 py-3">
               <p className="text-xs text-charcoal/50 mb-1">Paid so far</p>
               <p className="font-mono text-ledger text-lg">{formatINR(result.totalPaidSoFar)}</p>
             </div>
-            <div className="bg-white border border-ink/10 rounded-lg px-4 py-3">
+            <div className="bg-white border border-slate-200 rounded-lg px-4 py-3">
               <p className="text-xs text-charcoal/50 mb-1">Sec 234C interest</p>
               <p className="font-mono text-rust text-lg">{formatINR(result.total234CInterest)}</p>
             </div>
-            <div className="bg-white border border-ink/10 rounded-lg px-4 py-3">
+            <div className="bg-white border border-slate-200 rounded-lg px-4 py-3">
               <p className="text-xs text-charcoal/50 mb-1">Sec 234B interest</p>
               <p className="font-mono text-rust text-lg">{formatINR(result.total234BInterest)}</p>
             </div>
@@ -161,10 +161,10 @@ export default function AdvanceTaxCalculatorPage() {
 
       <div className="max-w-3xl mb-20">
         <h3 className="text-xl mb-4">Quarterly installment schedule</h3>
-        <div className="border border-ink/10 rounded-lg overflow-hidden mb-6">
+        <div className="card-flat overflow-hidden mb-6">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-paperDark/60 text-left">
+              <tr className="bg-slate-50 text-left">
                 <th className="px-4 py-2 font-medium text-charcoal/60 text-xs uppercase">Quarter</th>
                 <th className="px-4 py-2 font-medium text-charcoal/60 text-xs uppercase">Due date</th>
                 <th className="px-4 py-2 font-medium text-charcoal/60 text-xs uppercase text-right">Cumulative target</th>
@@ -175,7 +175,7 @@ export default function AdvanceTaxCalculatorPage() {
             </thead>
             <tbody>
               {result.quarters.map((q, i) => (
-                <tr key={i} className="border-t border-ink/5">
+                <tr key={i} className="border-t border-slate-100">
                   <td className="px-4 py-2 text-ink font-medium">{q.quarter}</td>
                   <td className="px-4 py-2 text-charcoal/60">{q.dueDate}</td>
                   <td className="px-4 py-2 text-right font-mono">{formatINR(q.requiredCumulativeAmount)}</td>
@@ -191,10 +191,10 @@ export default function AdvanceTaxCalculatorPage() {
         <div className="h-64 -ml-2">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#16283A" strokeOpacity={0.08} vertical={false} />
-              <XAxis dataKey="quarter" tick={{ fontSize: 11, fill: "#1C2321", opacity: 0.6 }} axisLine={false} tickLine={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#CBD5E1" strokeOpacity={0.6} vertical={false} />
+              <XAxis dataKey="quarter" tick={{ fontSize: 11, fill: "#64748B", opacity: 1 }} axisLine={false} tickLine={false} />
               <YAxis
-                tick={{ fontSize: 11, fill: "#1C2321", opacity: 0.6 }}
+                tick={{ fontSize: 11, fill: "#64748B", opacity: 1 }}
                 axisLine={false}
                 tickLine={false}
                 tickFormatter={(v) => `₹${Math.round(v / 1000)}k`}
@@ -203,7 +203,7 @@ export default function AdvanceTaxCalculatorPage() {
               <Tooltip formatter={(value: number) => formatINR(value)} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
               <Bar dataKey="Cumulative target" fill="#2E5EFF" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="Cumulative paid" fill="#1F6F54" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="Cumulative paid" fill="#0E9F6E" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -320,7 +320,7 @@ function Field({
           value={value}
           step={step}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full rounded-md border border-ink/15 bg-white px-3 py-2 font-mono text-ink focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent text-sm"
+          className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-ink focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent text-sm"
         />
         {!compact && <span className="text-xs text-charcoal/50 whitespace-nowrap">{suffix}</span>}
       </div>

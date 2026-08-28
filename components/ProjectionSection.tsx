@@ -35,14 +35,14 @@ export default function ProjectionSection({
           <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id="projectionFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#1F6F54" stopOpacity={0.25} />
-                <stop offset="100%" stopColor="#1F6F54" stopOpacity={0} />
+                <stop offset="0%" stopColor="#2E5EFF" stopOpacity={0.25} />
+                <stop offset="100%" stopColor="#2E5EFF" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#16283A" strokeOpacity={0.08} vertical={false} />
-            <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#1C2321", opacity: 0.6 }} axisLine={false} tickLine={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#CBD5E1" strokeOpacity={0.6} vertical={false} />
+            <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#64748B", opacity: 1 }} axisLine={false} tickLine={false} />
             <YAxis
-              tick={{ fontSize: 11, fill: "#1C2321", opacity: 0.6 }}
+              tick={{ fontSize: 11, fill: "#64748B", opacity: 1 }}
               axisLine={false}
               tickLine={false}
               tickFormatter={(v) => `₹${Math.round(v / 1000)}k`}
@@ -52,15 +52,15 @@ export default function ProjectionSection({
               formatter={(value: number) => [formatINR(value), valueLabel]}
               contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid rgba(22,40,58,0.15)" }}
             />
-            <Area type="monotone" dataKey="value" stroke="#1F6F54" strokeWidth={2} fill="url(#projectionFill)" />
+            <Area type="monotone" dataKey="value" stroke="#2E5EFF" strokeWidth={2} fill="url(#projectionFill)" />
           </AreaChart>
         </ResponsiveContainer>
       </div>
 
-      <div className="border border-ink/10 rounded-lg overflow-hidden">
+      <div className="card-flat overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-paperDark/60 text-left">
+            <tr className="bg-slate-50 text-left">
               <th className="px-4 py-2 font-medium text-charcoal/60 text-xs uppercase tracking-wide">
                 {columnLabel}
               </th>
@@ -71,7 +71,7 @@ export default function ProjectionSection({
           </thead>
           <tbody>
             {data.map((point, i) => (
-              <tr key={i} className="border-t border-ink/5">
+              <tr key={i} className="border-t border-slate-100">
                 <td className="px-4 py-2 text-charcoal/70">{point.label}</td>
                 <td className="px-4 py-2 text-right font-mono text-ink">{formatINR(point.value)}</td>
               </tr>

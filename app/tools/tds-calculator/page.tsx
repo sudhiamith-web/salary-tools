@@ -34,7 +34,7 @@ export default function TDSCalculatorPage() {
         your salary, based on the new tax regime (the default regime unless
         you've told your employer otherwise).
       </p>
-      <div className="stamp-note mb-10">
+      <div className="callout-warn mb-10 max-w-xl">
         Assumes even withholding across the remaining months. Employers
         often front-load or adjust TDS as the financial year progresses, so
         your actual payslip figure may differ from this estimate.
@@ -58,8 +58,7 @@ export default function TDSCalculatorPage() {
         </div>
 
         <div className="sticky top-6">
-          <div className="receipt-edge-top" />
-          <div className="bg-white px-6 py-6 shadow-sm">
+          <div className="card px-6 py-5">
             <div className="mb-2">
               <Badge>New regime</Badge>
             </div>
@@ -88,7 +87,7 @@ export default function TDSCalculatorPage() {
               </div>
             </div>
 
-            <div className="border-t border-ink/10 pt-3">
+            <div className="border-t border-slate-200 pt-3">
               <div className="ledger-row">
                 <span className="label font-medium text-ink">Total annual tax</span>
                 <span className="fill" />
@@ -96,7 +95,6 @@ export default function TDSCalculatorPage() {
               </div>
             </div>
           </div>
-          <div className="receipt-edge-bottom" />
         </div>
       </div>
 
@@ -183,7 +181,7 @@ function Field({
           value={value}
           step={step}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full rounded-md border border-ink/15 bg-white px-3 py-2 font-mono text-ink focus:outline-none focus:ring-2 focus:ring-ledger/40 focus:border-ledger"
+          className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-ink focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
         />
         <span className="text-xs text-charcoal/50 whitespace-nowrap">{suffix}</span>
       </div>

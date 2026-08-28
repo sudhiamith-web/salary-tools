@@ -36,10 +36,10 @@ export default function RootLayout({
       <body
         className={`${fraunces.variable} ${plexSans.variable} ${plexMono.variable}`}
       >
-        <header className="border-b border-ink/10 bg-paper">
+        <header className="border-b border-slate-200 bg-white/80 backdrop-blur sticky top-0 z-40">
           <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
             <Link href="/" className="font-display text-xl text-ink">
-              Salary-Tools<span className="text-ledger">.</span>
+              Salary-Tools<span className="text-accent">.</span>
             </Link>
             <nav className="text-sm text-charcoal/70 flex gap-6">
               <SiteNav />
@@ -47,7 +47,7 @@ export default function RootLayout({
           </div>
         </header>
         <main>{children}</main>
-        <footer className="border-t border-ink/10 mt-24">
+        <footer className="border-t border-slate-200 mt-24">
           <div className="mx-auto max-w-6xl px-6 py-10 text-xs text-charcoal/50">
             Salary-Tools is an independent project and is not affiliated with
             any employer, government body, or tax authority. Figures are

@@ -89,8 +89,7 @@ export default function OldVsNewRegimePage() {
         </div>
 
         <div className="sticky top-6 space-y-4">
-          <div className="receipt-edge-top" />
-          <div className="bg-white px-6 py-6 shadow-sm">
+          <div className="card px-6 py-5">
             <div className="flex items-center gap-4 mb-6">
               <RingChart
                 percent={takeHomePercent}
@@ -127,7 +126,7 @@ export default function OldVsNewRegimePage() {
               </div>
             </div>
 
-            <div className="border-t border-ink/10 pt-3 mb-3">
+            <div className="border-t border-slate-200 pt-3 mb-3">
               <div className="flex items-center gap-2 mb-1">
                 <Badge>New regime</Badge>
               </div>
@@ -143,7 +142,6 @@ export default function OldVsNewRegimePage() {
               </div>
             </div>
           </div>
-          <div className="receipt-edge-bottom" />
         </div>
       </div>
 
@@ -155,10 +153,10 @@ export default function OldVsNewRegimePage() {
         <div className="h-64 -ml-2 mb-4">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={comparisonChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#16283A" strokeOpacity={0.08} vertical={false} />
-              <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#1C2321", opacity: 0.6 }} axisLine={false} tickLine={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#CBD5E1" strokeOpacity={0.6} vertical={false} />
+              <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#64748B", opacity: 1 }} axisLine={false} tickLine={false} />
               <YAxis
-                tick={{ fontSize: 11, fill: "#1C2321", opacity: 0.6 }}
+                tick={{ fontSize: 11, fill: "#64748B", opacity: 1 }}
                 axisLine={false}
                 tickLine={false}
                 tickFormatter={(v) => `₹${Math.round(v / 1000)}k`}
@@ -168,18 +166,18 @@ export default function OldVsNewRegimePage() {
                 formatter={(value: number, name: string) => [formatINR(value), name === "oldTax" ? "Old regime" : "New regime"]}
                 contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid rgba(22,40,58,0.15)" }}
               />
-              <Line type="monotone" dataKey="oldTax" stroke="#16283A" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="newTax" stroke="#1F6F54" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="oldTax" stroke="#7C3AED" strokeWidth={2.5} dot={false} />
+              <Line type="monotone" dataKey="newTax" stroke="#2E5EFF" strokeWidth={2.5} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>
         <div className="flex gap-4 text-xs text-charcoal/60">
           <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: "#16283A" }} />
+            <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: "#7C3AED" }} />
             Old regime
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: "#1F6F54" }} />
+            <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: "#2E5EFF" }} />
             New regime
           </span>
         </div>
@@ -263,7 +261,7 @@ function Field({
           value={value}
           step={1000}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full rounded-md border border-ink/15 bg-white px-3 py-2 font-mono text-ink focus:outline-none focus:ring-2 focus:ring-ledger/40 focus:border-ledger"
+          className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-ink focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
         />
         <span className="text-xs text-charcoal/50 whitespace-nowrap">{suffix}</span>
       </div>

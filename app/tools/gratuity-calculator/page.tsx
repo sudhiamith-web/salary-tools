@@ -64,8 +64,8 @@ export default function GratuityCalculatorPage() {
                   onClick={() => setCategory(c)}
                   className={`text-left px-4 py-2 rounded-md border text-sm ${
                     category === c
-                      ? "bg-ink text-paper border-ink"
-                      : "bg-white text-charcoal/70 border-ink/15"
+                      ? "bg-accentTint border-accent text-ink"
+                      : "bg-white text-charcoal/70 border-slate-300"
                   }`}
                 >
                   {categoryLabels[c]}
@@ -96,8 +96,7 @@ export default function GratuityCalculatorPage() {
         </div>
 
         <div className="sticky top-6">
-          <div className="receipt-edge-top" />
-          <div className="bg-white px-6 py-6 shadow-sm">
+          <div className="card px-6 py-5">
             {!result.eligibleForGratuity ? (
               <div>
                 <Badge>Not yet eligible</Badge>
@@ -137,7 +136,7 @@ export default function GratuityCalculatorPage() {
                   )}
                 </div>
 
-                <div className="border-t border-ink/10 pt-3">
+                <div className="border-t border-slate-200 pt-3">
                   <div className="ledger-row">
                     <span className="label font-medium text-ink">Exempt from tax</span>
                     <span className="fill" />
@@ -152,7 +151,6 @@ export default function GratuityCalculatorPage() {
               </>
             )}
           </div>
-          <div className="receipt-edge-bottom" />
         </div>
       </div>
 
@@ -260,7 +258,7 @@ function Field({
           value={value}
           step={step}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full rounded-md border border-ink/15 bg-white px-3 py-2 font-mono text-ink focus:outline-none focus:ring-2 focus:ring-ledger/40 focus:border-ledger"
+          className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-ink focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
         />
         <span className="text-xs text-charcoal/50 whitespace-nowrap">{suffix}</span>
       </div>

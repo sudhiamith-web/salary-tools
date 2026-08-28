@@ -29,7 +29,7 @@ export default function FAQAccordion({ items }: { items: FAQItem[] }) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <div className="divide-y divide-ink/10 border-t border-b border-ink/10">
+      <div className="divide-y divide-ink/10 border-t border-b border-slate-200">
         {items.map((item, i) => (
           <div key={i}>
             <button

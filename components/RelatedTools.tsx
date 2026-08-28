@@ -6,7 +6,7 @@ export default function RelatedTools({ currentSlug }: { currentSlug: string }) {
   if (related.length === 0) return null;
 
   return (
-    <div className="border-t border-ink/10 pt-8 mt-4">
+    <div className="border-t border-slate-200 pt-8 mt-4">
       <h3 className="text-sm uppercase tracking-widest text-charcoal/50 font-medium mb-4">
         Related calculators
       </h3>
@@ -15,7 +15,7 @@ export default function RelatedTools({ currentSlug }: { currentSlug: string }) {
           <Link
             key={tool.slug}
             href={`/tools/${tool.slug}`}
-            className="block rounded-lg border border-ink/10 bg-white/40 p-4 hover:border-ledger/50 hover:bg-white/70 transition-colors"
+            className="block rounded-xl border border-slate-200/70 bg-white p-4 hover:border-accent hover:shadow-md transition-colors"
           >
             <h4 className="font-display text-base text-ink mb-1">{tool.name}</h4>
             <p className="text-xs text-charcoal/60">{tool.shortDesc}</p>

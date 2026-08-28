@@ -5,7 +5,7 @@ export default function Home() {
   return (
     <div className="mx-auto max-w-6xl px-6">
       <section className="py-20 max-w-2xl">
-        <p className="text-xs uppercase tracking-widest text-ledger font-medium mb-4">
+        <p className="text-xs uppercase tracking-widest text-accent font-semibold mb-4">
           Built for working India
         </p>
         <h1 className="text-4xl md:text-5xl leading-tight mb-5">
@@ -27,7 +27,7 @@ export default function Home() {
             <Link
               key={tool.slug}
               href={`/tools/${tool.slug}`}
-              className="block rounded-lg border border-ink/10 bg-white/40 p-5 hover:border-ledger/50 hover:bg-white/70 transition-colors"
+              className="block rounded-xl border border-slate-200/70 bg-white p-5 hover:border-accent hover:shadow-md transition-colors"
             >
               <h3 className="font-display text-lg text-ink mb-1">{tool.name}</h3>
               <p className="text-sm text-charcoal/60">{tool.shortDesc}</p>

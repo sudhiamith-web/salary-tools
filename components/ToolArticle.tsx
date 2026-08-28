@@ -1,6 +1,6 @@
 export function FormulaBox({ children }: { children: React.ReactNode }) {
   return (
-    <div className="bg-white border border-ink/10 rounded-lg px-5 py-4 font-mono text-sm text-ink my-4">
+    <div className="bg-slate-900 text-slate-100 rounded-xl px-5 py-4 font-mono text-sm my-4">
       {children}
     </div>
   );
