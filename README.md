@@ -40,13 +40,20 @@ app/
   tools/
     in-hand-salary-calculator/page.tsx
     hra-exemption-calculator/page.tsx
+    old-vs-new-regime-calculator/page.tsx
+    gratuity-calculator/page.tsx
+    tds-calculator/page.tsx
 lib/
   calculators/
-    salary.ts   — CTC → in-hand salary, new-regime tax logic
-    hra.ts      — Section 10(13A) HRA exemption logic
+    salary.ts      — CTC → in-hand salary, new-regime tax logic
+    hra.ts         — Section 10(13A) HRA exemption logic
+    oldRegime.ts   — old regime slabs, 80C/80D/HRA deductions, 87A rebate
+    gratuity.ts    — Payment of Gratuity Act 1972, Section 10(10) exemption
 components/
   PayslipCard.tsx   — result card for the salary calculator
   HRACard.tsx       — result card for the HRA calculator
+  RingChart.tsx     — dependency-free SVG donut/ring visual (no chart library)
+  Badge.tsx         — small pill component for regime labels and tags
 netlify.toml
 ```
 
@@ -63,9 +70,14 @@ netlify.toml
 
 ## Known simplifications
 
-- New-regime tax calc doesn't implement surcharge (income > ₹50L) or
-  marginal relief near the ₹12L rebate threshold.
-- Old tax regime income tax itself isn't calculated yet — only the HRA
-  exemption amount under the old regime's rules. A full old-vs-new
-  Income Tax Calculator is still on the roadmap.
+- Neither tax engine (old or new regime) implements surcharge (income >
+  ₹50L) or marginal relief near the rebate thresholds.
+- Old regime engine only models the general slabs (individuals under 60).
+  Senior/super-senior citizen slabs are separate and not yet modeled.
 - Professional tax default is a flat approximation, not state-specific.
+- Gratuity calculator doesn't yet distinguish government vs
+  non-government employees (government employees get full tax exemption
+  regardless of amount — currently everyone is treated as non-government).
+- TDS calculator assumes even monthly withholding across the remaining
+  months — real employer TDS schedules often front-load or adjust
+  through the year based on declared investments and Form 12BB.
