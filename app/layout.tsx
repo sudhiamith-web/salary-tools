@@ -3,7 +3,7 @@ import { Fraunces, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
 import SiteNav from "@/components/SiteNav";
-import GoogleAnalytics from "@/components/GoogleAnalytics";
+import ConsentGate from "@/components/ConsentGate";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -37,7 +37,7 @@ export default function RootLayout({
       <body
         className={`${fraunces.variable} ${plexSans.variable} ${plexMono.variable}`}
       >
-        <GoogleAnalytics />
+        <ConsentGate />
         <header className="border-b border-slate-200 bg-white/80 backdrop-blur sticky top-0 z-40">
           <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
             <Link href="/" className="font-display text-xl text-ink">
@@ -48,13 +48,18 @@ export default function RootLayout({
             </nav>
           </div>
         </header>
-        <main>{children}</main>
+        <main className="pb-24">{children}</main>
         <footer className="border-t border-slate-200 mt-24">
-          <div className="mx-auto max-w-6xl px-6 py-10 text-xs text-charcoal/50">
-            Salary-Tools is an independent project and is not affiliated with
-            any employer, government body, or tax authority. Figures are
-            estimates for planning purposes — always verify against your
-            official payslip or a tax professional.
+          <div className="mx-auto max-w-6xl px-6 py-10 text-xs text-charcoal/50 flex flex-col sm:flex-row justify-between gap-3">
+            <p>
+              Salary-Tools is an independent project and is not affiliated
+              with any employer, government body, or tax authority. Figures
+              are estimates for planning purposes — always verify against
+              your official payslip or a tax professional.
+            </p>
+            <Link href="/privacy" className="text-accent underline flex-shrink-0">
+              Privacy Policy
+            </Link>
           </div>
         </footer>
       </body>

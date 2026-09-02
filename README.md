@@ -26,14 +26,26 @@ blank so they don't override the file.
 
 ```
 app/
-  layout.tsx        — shell + SiteNav dropdown
+  layout.tsx        — shell + SiteNav dropdown + ConsentGate
   page.tsx           — homepage, pulls tool list from lib/tools.ts
+  privacy/page.tsx    — privacy policy (required before AdSense application)
   tools/
     in-hand-salary-calculator/page.tsx
     hra-exemption-calculator/page.tsx
     old-vs-new-regime-calculator/page.tsx
     gratuity-calculator/page.tsx
     tds-calculator/page.tsx
+    advance-tax-calculator/page.tsx
+    section-80c-planner/page.tsx
+    section-80d-calculator/page.tsx
+    ltcg-calculator/page.tsx
+    stcg-calculator/page.tsx
+    freelancer-tax-calculator/page.tsx
+    salary-vs-freelance-calculator/page.tsx
+    property-capital-gains-calculator/page.tsx
+    esop-tax-calculator/page.tsx
+    salary-capital-gains-calculator/page.tsx
+    rsu-tax-calculator/page.tsx
 lib/
   tools.ts           — SINGLE SOURCE OF TRUTH for live tools (nav, homepage,
                         related-tools cross-links all read from here). Add
@@ -46,19 +58,50 @@ lib/
     gratuity.ts       — Payment of Gratuity Act 1972 + Labour Codes
                         (fixed-term 1-yr eligibility, 50% wage rule),
                         Section 10(10) exemption
+    advanceTax.ts     — Section 234B/234C penal interest, quarterly schedule
+    section80c.ts     — 80C (₹1.5L) + 80CCD(1B) NPS bucket (₹50k, separate)
+    section80d.ts     — 80D self/family + parents brackets, senior citizen limits
+    capitalGains.ts   — LTCG (12.5%, Sec 112A) + STCG (20%, Sec 111A) on
+                        listed equity/equity mutual funds only
+    section44ada.ts   — presumptive taxation for professionals, ₹50L/₹75L limits
+    property.ts       — property LTCG, full CII table 2001-02 to 2026-27,
+                        grandfathering choice (12.5% vs 20% indexed)
+    esop.ts           — ESOP exercise perquisite + sale capital gains
+                        (listed vs unlisted holding-period rules)
+    rsu.ts            — foreign RSU vesting perquisite + sale, SBI TTBR
+                        forex conversion rule, unlisted-share treatment
 components/
-  PayslipCard.tsx     — result card, salary calculator
-  HRACard.tsx         — result card, HRA calculator
-  RingChart.tsx       — dependency-free SVG donut (used for simple 2-slice splits)
-  Badge.tsx           — pill component for regime/category labels
+  PayslipCard.tsx / HRACard.tsx — result cards (hero-box + card pattern)
+  RingChart.tsx       — dependency-free SVG donut (simple 2-slice splits)
+  Badge.tsx           — pill component (filled/outline/success/warn variants)
   FAQAccordion.tsx    — expandable FAQ + FAQPage JSON-LD schema
-  ProjectionSection.tsx — Recharts area chart + table, generic sensitivity/
-                        projection view reused across tools
+  ProjectionSection.tsx — Recharts area chart + table, generic projections
   ToolArticle.tsx     — written-explainer wrapper + FormulaBox callout
   RelatedTools.tsx     — cross-links, reads only from lib/tools.ts
   SiteNav.tsx          — header dropdown, reads only from lib/tools.ts
+  GoogleAnalytics.tsx  — GA4 script loader, reads NEXT_PUBLIC_GA_ID
+  ConsentGate.tsx       — cookie banner; only renders GoogleAnalytics after
+                        the visitor accepts (stored in localStorage)
 netlify.toml
+.env.local.example    — copy to .env.local, set NEXT_PUBLIC_GA_ID
 ```
+
+## Analytics setup
+
+Set `NEXT_PUBLIC_GA_ID` (format `G-XXXXXXXXXX`) as an environment variable
+in Netlify (Site configuration → Environment variables) and redeploy with
+cache cleared. Analytics only loads after a visitor accepts the cookie
+banner — see `ConsentGate.tsx`. See `.env.local.example` for local dev.
+
+## Design system
+
+Cool near-white background (`paper: #F7F9FC`), white floating cards with
+soft shadows (`.card` / `.card-flat` classes), bright blue accent
+(`accent: #2E5EFF`) as the primary interactive color, tinted callouts for
+info/insight/warnings (`.callout-info`, `.callout-insight`,
+`.callout-warn`), and a bright `.hero-box` for each tool's primary result
+number. Dotted-leader `.ledger-row` rows are kept for label→value detail
+breakdowns — the one surviving piece of the original paper/ledger look.
 
 ## The standard tool-page template
 

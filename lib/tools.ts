@@ -44,6 +44,66 @@ export const tools: ToolMeta[] = [
     shortDesc: "Estimate monthly TDS withheld from your salary.",
     category: "Salary & Tax",
   },
+  {
+    slug: "section-80c-planner",
+    name: "Section 80C Tax Planner",
+    shortDesc: "Track your ₹1.5L limit and see real tax saved.",
+    category: "Salary & Tax",
+  },
+  {
+    slug: "section-80d-calculator",
+    name: "Section 80D Health Insurance Calculator",
+    shortDesc: "Self/family and parents brackets, tax saved.",
+    category: "Salary & Tax",
+  },
+  {
+    slug: "ltcg-calculator",
+    name: "LTCG Calculator",
+    shortDesc: "Long-term capital gains tax on equity, 12.5%.",
+    category: "Salary & Tax",
+  },
+  {
+    slug: "stcg-calculator",
+    name: "STCG Calculator",
+    shortDesc: "Short-term capital gains tax on equity, 20%.",
+    category: "Salary & Tax",
+  },
+  {
+    slug: "freelancer-tax-calculator",
+    name: "Freelancer Tax Calculator (44ADA)",
+    shortDesc: "Presumptive taxation for specified professionals.",
+    category: "Salary & Tax",
+  },
+  {
+    slug: "salary-vs-freelance-calculator",
+    name: "Salary vs Freelance Tax Comparison",
+    shortDesc: "Same amount, salaried CTC vs freelance take-home.",
+    category: "Salary & Tax",
+  },
+  {
+    slug: "property-capital-gains-calculator",
+    name: "Property Capital Gains Tax Calculator",
+    shortDesc: "Grandfathering choice, indexation, Section 54/54EC.",
+    category: "Salary & Tax",
+  },
+  {
+    slug: "esop-tax-calculator",
+    name: "ESOP Tax Calculator",
+    shortDesc: "Exercise perquisite plus capital gains at sale.",
+    category: "Salary & Tax",
+  },
+  {
+    slug: "salary-capital-gains-calculator",
+    name: "Salary + Capital Gains Tax Calculator",
+    shortDesc: "Combined tax across salary and equity gains.",
+    category: "Salary & Tax",
+  },
+  {
+    slug: "rsu-tax-calculator",
+    name: "US Stocks & RSU Tax Calculator",
+    shortDesc: "Foreign RSU vesting, forex rules, Schedule FA.",
+    category: "Salary & Tax",
+  },
 ];
 
 export function relatedTools(currentSlug: string, count = 3): ToolMeta[] {
