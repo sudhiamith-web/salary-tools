@@ -3,6 +3,7 @@ import { Fraunces, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
 import SiteNav from "@/components/SiteNav";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -36,6 +37,7 @@ export default function RootLayout({
       <body
         className={`${fraunces.variable} ${plexSans.variable} ${plexMono.variable}`}
       >
+        <GoogleAnalytics />
         <header className="border-b border-slate-200 bg-white/80 backdrop-blur sticky top-0 z-40">
           <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
             <Link href="/" className="font-display text-xl text-ink">
