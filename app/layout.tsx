@@ -50,16 +50,19 @@ export default function RootLayout({
         </header>
         <main className="pb-24">{children}</main>
         <footer className="border-t border-slate-200 mt-24">
-          <div className="mx-auto max-w-6xl px-6 py-10 text-xs text-charcoal/50 flex flex-col sm:flex-row justify-between gap-3">
-            <p>
+          <div className="mx-auto max-w-6xl px-6 py-10 flex flex-col sm:flex-row justify-between gap-4">
+            <p className="text-xs text-charcoal/50 max-w-md">
               Salary-Tools is an independent project and is not affiliated
               with any employer, government body, or tax authority. Figures
               are estimates for planning purposes — always verify against
               your official payslip or a tax professional.
             </p>
-            <Link href="/privacy" className="text-accent underline flex-shrink-0">
-              Privacy Policy
-            </Link>
+            <div className="flex gap-4 text-xs flex-shrink-0">
+              <Link href="/about" className="text-accent underline">About</Link>
+              <Link href="/contact" className="text-accent underline">Contact</Link>
+              <Link href="/privacy" className="text-accent underline">Privacy</Link>
+              <Link href="/terms" className="text-accent underline">Terms</Link>
+            </div>
           </div>
         </footer>
       </body>

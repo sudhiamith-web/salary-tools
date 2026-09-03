@@ -28,6 +28,13 @@ blank so they don't override the file.
 app/
   layout.tsx        — shell + SiteNav dropdown + ConsentGate
   page.tsx           — homepage, pulls tool list from lib/tools.ts
+  sitemap.ts         — auto-generated sitemap.xml, reads lib/tools.ts —
+                        add a tool there and it appears here automatically
+  robots.ts          — auto-generated robots.txt, points to the sitemap
+  about/page.tsx      — About page
+  contact/page.tsx    — Contact page (uses hello@salary-tools.com — set
+                        this up as a real domain email before launch)
+  terms/page.tsx      — Terms & Conditions / disclaimer
   privacy/page.tsx    — privacy policy (required before AdSense application)
   tools/
     in-hand-salary-calculator/page.tsx
