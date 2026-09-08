@@ -14,7 +14,11 @@ import { computeNewRegimeTax, formatINR } from "@/lib/calculators/salary";
 import { computeOldRegimeTax, SECTION_80C_LIMIT } from "@/lib/calculators/oldRegime";
 import Badge from "@/components/Badge";
 import RingChart from "@/components/RingChart";
-import ToolArticle, { FormulaBox } from "@/components/ToolArticle";
+import Breadcrumb from "@/components/Breadcrumb";
+import SliderField from "@/components/SliderField";
+import InsightBanner from "@/components/InsightBanner";
+import ArticleWithTOC from "@/components/ArticleWithTOC";
+import { FormulaBox } from "@/components/ToolArticle";
 import FAQAccordion from "@/components/FAQAccordion";
 import RelatedTools from "@/components/RelatedTools";
 
@@ -61,8 +65,23 @@ export default function OldVsNewRegimePage() {
     }));
   }, [section80C, section80D, hraExemption, otherDeductions]);
 
+  const insight = useMemo(() => {
+    const headroom = 150000 - section80C;
+    if (headroom <= 0) return null;
+    const bumped = computeOldRegimeTax({
+      grossAnnualIncome: grossIncome,
+      section80CDeduction: 150000,
+      section80DDeduction: section80D,
+      hraExemption,
+      otherDeductions,
+    });
+    const delta = oldRegime.totalTax - bumped.totalTax;
+    return delta > 0 ? { headroom, delta } : null;
+  }, [grossIncome, section80C, section80D, hraExemption, otherDeductions, oldRegime.totalTax]);
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">
+      <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Calculators", href: "/" }, { label: "Old vs New Tax Regime Calculator" }]} />
       <h1 className="text-3xl mb-2">Old vs New Tax Regime Calculator</h1>
       <p className="text-charcoal/60 mb-10 max-w-xl">
         See your exact tax liability under both regimes, side by side, based
@@ -71,12 +90,23 @@ export default function OldVsNewRegimePage() {
 
       <div className="grid lg:grid-cols-[1fr_420px] gap-10 mb-20">
         <div className="space-y-6 max-w-md">
-          <Field label="Gross annual income" value={grossIncome} onChange={setGrossIncome} suffix="₹ / year" />
-          <Field
+          <SliderField
+            label="Gross annual income"
+            value={grossIncome}
+            onChange={setGrossIncome}
+            suffix="₹ / year"
+            min={400000}
+            max={5000000}
+            step={50000}
+          />
+          <SliderField
             label={`Section 80C investments (max ${formatINR(SECTION_80C_LIMIT)})`}
             value={section80C}
             onChange={setSection80C}
             suffix="₹ / year"
+            min={0}
+            max={150000}
+            step={5000}
           />
           <Field label="Section 80D health insurance premium" value={section80D} onChange={setSection80D} suffix="₹ / year" />
           <Field label="HRA exemption (from the HRA calculator)" value={hraExemption} onChange={setHraExemption} suffix="₹ / year" />
@@ -167,7 +197,7 @@ export default function OldVsNewRegimePage() {
                 contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid rgba(22,40,58,0.15)" }}
               />
               <Line type="monotone" dataKey="oldTax" stroke="#7C3AED" strokeWidth={2.5} dot={false} />
-              <Line type="monotone" dataKey="newTax" stroke="#2E5EFF" strokeWidth={2.5} dot={false} />
+              <Line type="monotone" dataKey="newTax" stroke="#6D28D9" strokeWidth={2.5} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -177,35 +207,62 @@ export default function OldVsNewRegimePage() {
             Old regime
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: "#2E5EFF" }} />
+            <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: "#6D28D9" }} />
             New regime
           </span>
         </div>
       </div>
 
+      {insight && (
+        <div className="mb-10 max-w-2xl">
+          <InsightBanner
+            message={`Using your remaining ₹${insight.headroom.toLocaleString("en-IN")} of 80C headroom would save ₹${Math.round(insight.delta).toLocaleString("en-IN")} more under the old regime`}
+          />
+        </div>
+      )}
+
       <div className="mb-20">
-        <ToolArticle title="Why the 'better' regime depends on your deductions, not just your income">
-          <p>
-            The new regime offers lower tax rates but allows almost no
-            deductions. The old regime has higher rates but lets you reduce
-            taxable income through 80C, 80D, HRA, and home loan interest.
-            Whether the old regime wins depends entirely on how large your
-            total deductions are relative to your income:
-          </p>
-          <FormulaBox>
-            Old regime wins when: total deductions are large enough that the
-            tax saved exceeds what the new regime's lower rates already save you
-          </FormulaBox>
-          <p>
-            As a rough pattern: someone with minimal deductions (no HRA, no
-            80C investments, no home loan) almost always does better on the
-            new regime. Someone with a home loan, full 80C utilization, and
-            HRA exemption often breaks even around ₹15-20L income, sometimes
-            favoring the old regime above that — but there's no universal
-            number, which is exactly why calculating your specific numbers
-            matters more than a rule of thumb.
-          </p>
-        </ToolArticle>
+        <ArticleWithTOC
+          sections={[
+            {
+              id: "why-it-depends",
+              label: "Why it depends on deductions",
+              content: (
+                <>
+                  <p>
+                    The new regime offers lower tax rates but allows almost no
+                    deductions. The old regime has higher rates but lets you
+                    reduce taxable income through 80C, 80D, HRA, and home loan
+                    interest. Whether the old regime wins depends entirely on
+                    how large your total deductions are relative to your
+                    income:
+                  </p>
+                  <FormulaBox>
+                    Old regime wins when: total deductions are large enough
+                    that the tax saved exceeds what the new regime&apos;s
+                    lower rates already save you
+                  </FormulaBox>
+                </>
+              ),
+            },
+            {
+              id: "general-patterns",
+              label: "General break-even patterns",
+              content: (
+                <p>
+                  As a rough pattern: someone with minimal deductions (no
+                  HRA, no 80C investments, no home loan) almost always does
+                  better on the new regime. Someone with a home loan, full
+                  80C utilization, and HRA exemption often breaks even
+                  around ₹15-20L income, sometimes favoring the old regime
+                  above that — but there&apos;s no universal number, which
+                  is exactly why calculating your specific numbers matters
+                  more than a rule of thumb.
+                </p>
+              ),
+            },
+          ]}
+        />
       </div>
 
       <div className="mb-20">

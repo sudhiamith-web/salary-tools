@@ -4,10 +4,14 @@ import { useMemo, useState } from "react";
 import { computeSection80C, SECTION_80C_LIMIT, SECTION_80CCD_1B_LIMIT } from "@/lib/calculators/section80c";
 import { computeOldRegimeTax } from "@/lib/calculators/oldRegime";
 import { formatINR } from "@/lib/calculators/salary";
-import ToolArticle, { FormulaBox } from "@/components/ToolArticle";
+import { FormulaBox } from "@/components/ToolArticle";
+import ArticleWithTOC from "@/components/ArticleWithTOC";
 import FAQAccordion from "@/components/FAQAccordion";
 import RelatedTools from "@/components/RelatedTools";
 import ProjectionSection, { ProjectionPoint } from "@/components/ProjectionSection";
+import Breadcrumb from "@/components/Breadcrumb";
+import SliderField from "@/components/SliderField";
+import InsightBanner from "@/components/InsightBanner";
 
 export default function Section80CPlannerPage() {
   const [income, setIncome] = useState(1200000);
@@ -58,8 +62,29 @@ export default function Section80CPlannerPage() {
     });
   }, [income]);
 
+  const insight = useMemo(() => {
+    if (result.unused80C <= 0) return null;
+    const withMax = computeOldRegimeTax({
+      grossAnnualIncome: income,
+      section80CDeduction: 150000,
+      section80DDeduction: 0,
+      hraExemption: 0,
+      otherDeductions: Math.min(npsContribution, SECTION_80CCD_1B_LIMIT),
+    });
+    const withCurrent = computeOldRegimeTax({
+      grossAnnualIncome: income,
+      section80CDeduction: investments,
+      section80DDeduction: 0,
+      hraExemption: 0,
+      otherDeductions: Math.min(npsContribution, SECTION_80CCD_1B_LIMIT),
+    });
+    const delta = withCurrent.totalTax - withMax.totalTax;
+    return delta > 0 ? { headroom: result.unused80C, delta } : null;
+  }, [income, investments, npsContribution, result.unused80C]);
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">
+      <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Calculators", href: "/" }, { label: "Section 80C Tax Planner" }]} />
       <h1 className="text-3xl mb-2">Section 80C Tax Planner</h1>
       <p className="text-charcoal/60 mb-4 max-w-xl">
         See how much of your ₹1,50,000 Section 80C limit you've used, and
@@ -74,18 +99,32 @@ export default function Section80CPlannerPage() {
 
       <div className="grid lg:grid-cols-[1fr_380px] gap-10 mb-20">
         <div className="space-y-6 max-w-md">
-          <Field label="Annual taxable income (before 80C, old regime)" value={income} onChange={setIncome} suffix="₹ / year" />
-          <Field
+          <SliderField
+            label="Annual taxable income (before 80C, old regime)"
+            value={income}
+            onChange={setIncome}
+            suffix="₹ / year"
+            min={300000}
+            max={5000000}
+            step={50000}
+          />
+          <SliderField
             label={`80C investments (PPF, ELSS, EPF, insurance, etc. — max ${formatINR(SECTION_80C_LIMIT)})`}
             value={investments}
             onChange={setInvestments}
             suffix="₹ / year"
+            min={0}
+            max={150000}
+            step={5000}
           />
-          <Field
+          <SliderField
             label={`NPS contribution — Section 80CCD(1B) (separate ${formatINR(SECTION_80CCD_1B_LIMIT)} bucket)`}
             value={npsContribution}
             onChange={setNpsContribution}
             suffix="₹ / year"
+            min={0}
+            max={50000}
+            step={5000}
           />
         </div>
 
@@ -133,30 +172,56 @@ export default function Section80CPlannerPage() {
         />
       </div>
 
+      {insight && (
+        <div className="mb-10 max-w-2xl">
+          <InsightBanner
+            message={`Using your remaining ₹${insight.headroom.toLocaleString("en-IN")} of 80C headroom would save you ₹${Math.round(insight.delta).toLocaleString("en-IN")} more`}
+          />
+        </div>
+      )}
+
       <div className="mb-20">
-        <ToolArticle title="How 80C actually reduces your tax">
-          <p>
-            Section 80C doesn't directly cut your tax bill — it reduces your
-            taxable income, and the actual rupee savings depend on which
-            tax slab that income falls in:
-          </p>
-          <FormulaBox>Tax saved = Tax(income) − Tax(income − 80C deduction)</FormulaBox>
-          <p>
-            This means the same ₹1,50,000 investment saves more for someone
-            in the 30% slab than someone in the 5% slab — there's no flat
-            "you save X%" answer, which is why this calculator computes the
-            actual difference using the real old-regime slabs rather than
-            a rule of thumb.
-          </p>
-          <p>
-            Common instruments that count toward the ₹1,50,000 limit: EPF
-            contributions, PPF, ELSS mutual funds, life insurance premiums,
-            five-year tax-saver FDs, NSC, Sukanya Samriddhi, and home loan
-            principal repayment. NPS under Section 80CCD(1B) is deliberately
-            kept separate — it's the one way to get tax benefit beyond the
-            ₹1,50,000 ceiling, up to an additional ₹50,000.
-          </p>
-        </ToolArticle>
+        <ArticleWithTOC
+          sections={[
+            {
+              id: "how-it-works",
+              label: "How 80C reduces your tax",
+              content: (
+                <>
+                  <p>
+                    Section 80C doesn&apos;t directly cut your tax bill — it
+                    reduces your taxable income, and the actual rupee
+                    savings depend on which tax slab that income falls in:
+                  </p>
+                  <FormulaBox>Tax saved = Tax(income) − Tax(income − 80C deduction)</FormulaBox>
+                  <p>
+                    This means the same ₹1,50,000 investment saves more for
+                    someone in the 30% slab than someone in the 5% slab —
+                    there&apos;s no flat &quot;you save X%&quot; answer,
+                    which is why this calculator computes the actual
+                    difference using the real old-regime slabs rather than
+                    a rule of thumb.
+                  </p>
+                </>
+              ),
+            },
+            {
+              id: "what-counts",
+              label: "What counts toward the limit",
+              content: (
+                <p>
+                  Common instruments that count toward the ₹1,50,000 limit:
+                  EPF contributions, PPF, ELSS mutual funds, life insurance
+                  premiums, five-year tax-saver FDs, NSC, Sukanya
+                  Samriddhi, and home loan principal repayment. NPS under
+                  Section 80CCD(1B) is deliberately kept separate —
+                  it&apos;s the one way to get tax benefit beyond the
+                  ₹1,50,000 ceiling, up to an additional ₹50,000.
+                </p>
+              ),
+            },
+          ]}
+        />
       </div>
 
       <div className="mb-20">

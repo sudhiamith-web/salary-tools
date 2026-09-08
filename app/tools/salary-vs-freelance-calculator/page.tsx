@@ -5,9 +5,12 @@ import { computeInHandSalary, formatINR, computeNewRegimeTax } from "@/lib/calcu
 import { computeSection44ADA } from "@/lib/calculators/section44ada";
 import Badge from "@/components/Badge";
 import RingChart from "@/components/RingChart";
-import ToolArticle, { FormulaBox } from "@/components/ToolArticle";
+import { FormulaBox } from "@/components/ToolArticle";
+import ArticleWithTOC from "@/components/ArticleWithTOC";
 import FAQAccordion from "@/components/FAQAccordion";
 import RelatedTools from "@/components/RelatedTools";
+import Breadcrumb from "@/components/Breadcrumb";
+import SliderField from "@/components/SliderField";
 
 export default function SalaryVsFreelanceCalculatorPage() {
   const [annualAmount, setAnnualAmount] = useState(1800000);
@@ -35,6 +38,7 @@ export default function SalaryVsFreelanceCalculatorPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">
+      <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Calculators", href: "/" }, { label: "Salary vs Freelance Tax Comparison" }]} />
       <h1 className="text-3xl mb-2">Salary vs Freelance Tax Comparison</h1>
       <p className="text-charcoal/60 mb-10 max-w-xl">
         For the same annual amount, compare take-home as a salaried
@@ -44,8 +48,24 @@ export default function SalaryVsFreelanceCalculatorPage() {
 
       <div className="grid lg:grid-cols-[1fr_420px] gap-10 mb-20">
         <div className="space-y-6 max-w-md">
-          <Field label="Annual amount (CTC or gross receipts)" value={annualAmount} onChange={setAnnualAmount} suffix="₹ / year" />
-          <Field label="Freelance cash receipts (% of total)" value={cashPercent} onChange={setCashPercent} suffix="%" step={1} />
+          <SliderField
+            label="Annual amount (CTC or gross receipts)"
+            value={annualAmount}
+            onChange={setAnnualAmount}
+            suffix="₹ / year"
+            min={300000}
+            max={5000000}
+            step={50000}
+          />
+          <SliderField
+            label="Freelance cash receipts (% of total)"
+            value={cashPercent}
+            onChange={setCashPercent}
+            suffix="%"
+            min={0}
+            max={100}
+            step={1}
+          />
           <p className="text-xs text-charcoal/50 -mt-4">
             Salary side assumes a typical 40% Basic, 12% PF structure.
             Freelance side assumes you qualify for Section 44ADA. Neither
@@ -71,7 +91,7 @@ export default function SalaryVsFreelanceCalculatorPage() {
             <div className="card px-5 py-5 text-center">
               <RingChart
                 percent={freelanceTakeHomePercent}
-                color="#2E5EFF"
+                color="#6D28D9"
                 label={`${Math.round(freelanceTakeHomePercent)}%`}
                 sublabel="take-home"
                 size={90}
@@ -93,34 +113,44 @@ export default function SalaryVsFreelanceCalculatorPage() {
       </div>
 
       <div className="mb-20">
-        <ToolArticle title="Why freelance often nets more — and what that comparison misses">
-          <p>
-            For the same headline amount, freelancing under 44ADA often
-            shows higher take-home, mainly because only 50% of receipts get
-            taxed as income at all:
-          </p>
-          <FormulaBox>
-            Freelance taxable income = 50% × receipts, vs Salary taxable income ≈ full CTC minus PF
-          </FormulaBox>
-          <p>
-            But this comparison is incomplete on purpose — it's only
-            showing the tax mechanics, not the full financial picture.
-            Salaried CTC typically includes employer PF contributions
-            (building retirement savings, not spendable now but real
-            value), gratuity accrual, and often health insurance —
-            benefits a freelance rate has to informally price in and
-            self-fund. A freelancer also carries income volatility, no paid
-            leave, and full responsibility for their own retirement
-            savings and health cover that a salaried structure partly
-            handles automatically.
-          </p>
-          <p>
-            Use this tool for the tax-mechanics comparison specifically —
-            not as the full "which is better" answer, which depends on
-            job security preferences, benefits value, and income stability
-            too.
-          </p>
-        </ToolArticle>
+        <ArticleWithTOC
+          sections={[
+            {
+              id: "why-freelance-shows-more",
+              label: "Why freelance often shows more",
+              content: (
+                <>
+                  <p>
+                    For the same headline amount, freelancing under 44ADA
+                    often shows higher take-home, mainly because only 50%
+                    of receipts get taxed as income at all:
+                  </p>
+                  <FormulaBox>
+                    Freelance taxable income = 50% × receipts, vs Salary taxable income ≈ full CTC minus PF
+                  </FormulaBox>
+                </>
+              ),
+            },
+            {
+              id: "what-this-misses",
+              label: "What this comparison misses",
+              content: (
+                <p>
+                  This comparison is incomplete on purpose — it&apos;s
+                  only showing the tax mechanics, not the full financial
+                  picture. Salaried CTC typically includes employer PF
+                  contributions, gratuity accrual, and often health
+                  insurance — benefits a freelance rate has to informally
+                  price in and self-fund. A freelancer also carries income
+                  volatility, no paid leave, and full responsibility for
+                  their own retirement savings and health cover. Use this
+                  tool for the tax-mechanics comparison specifically, not
+                  as the full &quot;which is better&quot; answer.
+                </p>
+              ),
+            },
+          ]}
+        />
       </div>
 
       <div className="mb-20">
@@ -148,35 +178,5 @@ export default function SalaryVsFreelanceCalculatorPage() {
 
       <RelatedTools currentSlug="salary-vs-freelance-calculator" />
     </div>
-  );
-}
-
-function Field({
-  label,
-  value,
-  onChange,
-  suffix,
-  step = 1000,
-}: {
-  label: string;
-  value: number;
-  onChange: (v: number) => void;
-  suffix: string;
-  step?: number;
-}) {
-  return (
-    <label className="block">
-      <span className="text-sm font-medium text-ink block mb-1.5">{label}</span>
-      <div className="flex items-center gap-2">
-        <input
-          type="number"
-          value={value}
-          step={step}
-          onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-ink focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
-        />
-        <span className="text-xs text-charcoal/50 whitespace-nowrap">{suffix}</span>
-      </div>
-    </label>
   );
 }

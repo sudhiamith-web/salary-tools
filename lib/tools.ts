@@ -87,6 +87,12 @@ export const tools: ToolMeta[] = [
     category: "Salary & Tax",
   },
   {
+    slug: "indexation-calculator",
+    name: "Indexation Calculator (CII)",
+    shortDesc: "Look up CII values and your indexed cost of acquisition.",
+    category: "Salary & Tax",
+  },
+  {
     slug: "esop-tax-calculator",
     name: "ESOP Tax Calculator",
     shortDesc: "Exercise perquisite plus capital gains at sale.",

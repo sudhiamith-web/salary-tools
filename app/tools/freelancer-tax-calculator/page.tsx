@@ -4,10 +4,14 @@ import { useMemo, useState } from "react";
 import { computeSection44ADA } from "@/lib/calculators/section44ada";
 import { computeNewRegimeTax, formatINR } from "@/lib/calculators/salary";
 import Badge from "@/components/Badge";
-import ToolArticle, { FormulaBox } from "@/components/ToolArticle";
+import { FormulaBox } from "@/components/ToolArticle";
+import ArticleWithTOC from "@/components/ArticleWithTOC";
 import FAQAccordion from "@/components/FAQAccordion";
 import RelatedTools from "@/components/RelatedTools";
 import ProjectionSection, { ProjectionPoint } from "@/components/ProjectionSection";
+import Breadcrumb from "@/components/Breadcrumb";
+import SliderField from "@/components/SliderField";
+import InsightBanner from "@/components/InsightBanner";
 
 export default function FreelancerTaxCalculatorPage() {
   const [grossReceipts, setGrossReceipts] = useState(3000000);
@@ -28,8 +32,11 @@ export default function FreelancerTaxCalculatorPage() {
     });
   }, [cashPercent]);
 
+  const insight = cashPercent > 5 ? { extraLimit: 2500000 } : null;
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">
+      <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Calculators", href: "/" }, { label: "Freelancer Tax Calculator (44ADA)" }]} />
       <h1 className="text-3xl mb-2">Freelancer Tax Calculator (Section 44ADA)</h1>
       <p className="text-charcoal/60 mb-10 max-w-xl">
         For specified professionals (consultants, doctors, lawyers,
@@ -39,12 +46,22 @@ export default function FreelancerTaxCalculatorPage() {
 
       <div className="grid lg:grid-cols-[1fr_380px] gap-10 mb-20">
         <div className="space-y-6 max-w-md">
-          <Field label="Gross annual receipts" value={grossReceipts} onChange={setGrossReceipts} suffix="₹ / year" />
-          <Field
+          <SliderField
+            label="Gross annual receipts"
+            value={grossReceipts}
+            onChange={setGrossReceipts}
+            suffix="₹ / year"
+            min={0}
+            max={7500000}
+            step={100000}
+          />
+          <SliderField
             label="Cash receipts (% of total)"
             value={cashPercent}
             onChange={setCashPercent}
             suffix="%"
+            min={0}
+            max={100}
             step={1}
           />
           <p className="text-xs text-charcoal/50 -mt-4">
@@ -98,30 +115,54 @@ export default function FreelancerTaxCalculatorPage() {
         />
       </div>
 
+      {insight && (
+        <div className="mb-10 max-w-2xl">
+          <InsightBanner
+            message={`Keeping cash receipts at or below 5% would raise your eligibility limit to ₹75L — ₹${(insight.extraLimit / 100000).toFixed(0)}L more headroom`}
+          />
+        </div>
+      )}
+
       <div className="mb-20">
-        <ToolArticle title="Why 44ADA is worth understanding before you incorporate anything">
-          <p>
-            Section 44ADA lets specified professionals skip the entire
-            expense-tracking exercise most freelancers dread — instead of
-            proving every deduction, you simply declare 50% of receipts as
-            income:
-          </p>
-          <FormulaBox>Presumptive income = 50% × gross receipts (minimum — you can declare more)</FormulaBox>
-          <p>
-            This is genuinely advantageous if your real expenses are below
-            50% of receipts — which is common for consulting, tech, and
-            knowledge work with low overhead. If your actual costs run
-            higher than 50% (e.g. a doctor with expensive equipment and
-            staff), the regular books-of-account route might leave you
-            paying tax on a smaller, more accurate profit figure instead.
-          </p>
-          <p>
-            The eligibility limits are based on gross receipts, not profit
-            — cross ₹50 lakh (or ₹75 lakh if your cash receipts stay at or
-            below 5%) and you lose access to the scheme entirely for that
-            year, not just on the excess.
-          </p>
-        </ToolArticle>
+        <ArticleWithTOC
+          sections={[
+            {
+              id: "why-it-matters",
+              label: "Why this matters",
+              content: (
+                <>
+                  <p>
+                    Section 44ADA lets specified professionals skip the
+                    entire expense-tracking exercise most freelancers
+                    dread — instead of proving every deduction, you simply
+                    declare 50% of receipts as income:
+                  </p>
+                  <FormulaBox>Presumptive income = 50% × gross receipts (minimum — you can declare more)</FormulaBox>
+                  <p>
+                    This is genuinely advantageous if your real expenses
+                    are below 50% of receipts. If your actual costs run
+                    higher (e.g. a doctor with expensive equipment and
+                    staff), the regular books-of-account route might leave
+                    you paying tax on a smaller, more accurate profit
+                    figure instead.
+                  </p>
+                </>
+              ),
+            },
+            {
+              id: "eligibility-limits",
+              label: "The eligibility limits",
+              content: (
+                <p>
+                  The eligibility limits are based on gross receipts, not
+                  profit — cross ₹50 lakh (or ₹75 lakh if your cash
+                  receipts stay at or below 5%) and you lose access to the
+                  scheme entirely for that year, not just on the excess.
+                </p>
+              ),
+            },
+          ]}
+        />
       </div>
 
       <div className="mb-20">

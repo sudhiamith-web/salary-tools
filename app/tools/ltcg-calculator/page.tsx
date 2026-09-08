@@ -3,10 +3,14 @@
 import { useMemo, useState } from "react";
 import { computeLTCG, LTCG_EXEMPTION } from "@/lib/calculators/capitalGains";
 import { formatINR } from "@/lib/calculators/salary";
-import ToolArticle, { FormulaBox } from "@/components/ToolArticle";
+import { FormulaBox } from "@/components/ToolArticle";
+import ArticleWithTOC from "@/components/ArticleWithTOC";
 import FAQAccordion from "@/components/FAQAccordion";
 import RelatedTools from "@/components/RelatedTools";
 import ProjectionSection, { ProjectionPoint } from "@/components/ProjectionSection";
+import Breadcrumb from "@/components/Breadcrumb";
+import SliderField from "@/components/SliderField";
+import InsightBanner from "@/components/InsightBanner";
 
 export default function LTCGCalculatorPage() {
   const [saleValue, setSaleValue] = useState(500000);
@@ -26,8 +30,14 @@ export default function LTCGCalculatorPage() {
     }));
   }, [purchaseValue]);
 
+  const insight = useMemo(() => {
+    const headroom = LTCG_EXEMPTION - result.gain;
+    return headroom > 0 ? { headroom } : null;
+  }, [result.gain]);
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">
+      <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Calculators", href: "/" }, { label: "LTCG Calculator" }]} />
       <h1 className="text-3xl mb-2">LTCG Calculator (Equity & Equity Mutual Funds)</h1>
       <p className="text-charcoal/60 mb-4 max-w-xl">
         Calculate long-term capital gains tax on listed shares and
@@ -41,9 +51,9 @@ export default function LTCGCalculatorPage() {
 
       <div className="grid lg:grid-cols-[1fr_380px] gap-10 mb-20">
         <div className="space-y-6 max-w-md">
-          <Field label="Sale value" value={saleValue} onChange={setSaleValue} suffix="₹" />
-          <Field label="Purchase value" value={purchaseValue} onChange={setPurchaseValue} suffix="₹" />
-          <Field label="Brokerage / STT / other expenses" value={expenses} onChange={setExpenses} suffix="₹" />
+          <SliderField label="Sale value" value={saleValue} onChange={setSaleValue} suffix="₹" min={0} max={5000000} step={10000} />
+          <SliderField label="Purchase value" value={purchaseValue} onChange={setPurchaseValue} suffix="₹" min={0} max={5000000} step={10000} />
+          <SliderField label="Brokerage / STT / other expenses" value={expenses} onChange={setExpenses} suffix="₹" min={0} max={50000} step={500} />
           <p className="text-xs text-charcoal/50 pt-2">
             Assumes the holding period is over 12 months. If it's 12 months
             or less, use the STCG Calculator instead — the rate and rules
@@ -105,27 +115,54 @@ export default function LTCGCalculatorPage() {
         />
       </div>
 
+      {insight && (
+        <div className="mb-10 max-w-2xl">
+          <InsightBanner
+            message={`You have ₹${Math.round(insight.headroom).toLocaleString("en-IN")} of exemption headroom left this year — realizing gains up to that would be fully tax-free`}
+          />
+        </div>
+      )}
+
       <div className="mb-20">
-        <ToolArticle title="How LTCG on equity actually works">
-          <p>
-            Long-term capital gains on listed shares and equity mutual funds
-            get a yearly exemption before any tax applies:
-          </p>
-          <FormulaBox>
-            LTCG tax = MAX(0, gain − ₹1,25,000) × 12.5% × 1.04 (cess)
-          </FormulaBox>
-          <p>
-            The ₹1,25,000 exemption is an aggregate annual limit across all
-            your equity LTCG for the year — not per transaction or per
-            fund. If you sell multiple holdings, the exemption applies once
-            to the combined total gain, not once per sale.
-          </p>
-          <p>
-            Unlike the old LTCG rules, there's no indexation benefit here —
-            the 12.5% rate applies to the raw gain (sale minus purchase
-            minus expenses), not an inflation-adjusted cost.
-          </p>
-        </ToolArticle>
+        <ArticleWithTOC
+          sections={[
+            {
+              id: "how-it-works",
+              label: "How the exemption works",
+              content: (
+                <>
+                  <p>
+                    Long-term capital gains on listed shares and equity
+                    mutual funds get a yearly exemption before any tax
+                    applies:
+                  </p>
+                  <FormulaBox>
+                    LTCG tax = MAX(0, gain − ₹1,25,000) × 12.5% × 1.04 (cess)
+                  </FormulaBox>
+                  <p>
+                    The ₹1,25,000 exemption is an aggregate annual limit
+                    across all your equity LTCG for the year — not per
+                    transaction or per fund. If you sell multiple
+                    holdings, the exemption applies once to the combined
+                    total gain, not once per sale.
+                  </p>
+                </>
+              ),
+            },
+            {
+              id: "no-indexation",
+              label: "No indexation benefit",
+              content: (
+                <p>
+                  Unlike the old LTCG rules, there&apos;s no indexation
+                  benefit here — the 12.5% rate applies to the raw gain
+                  (sale minus purchase minus expenses), not an
+                  inflation-adjusted cost.
+                </p>
+              ),
+            },
+          ]}
+        />
       </div>
 
       <div className="mb-20">

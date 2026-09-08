@@ -4,9 +4,13 @@ import { useMemo, useState } from "react";
 import { computeRSUVest, computeRSUSale } from "@/lib/calculators/rsu";
 import { computeNewRegimeTax, formatINR } from "@/lib/calculators/salary";
 import Badge from "@/components/Badge";
-import ToolArticle, { FormulaBox } from "@/components/ToolArticle";
+import { FormulaBox } from "@/components/ToolArticle";
+import ArticleWithTOC from "@/components/ArticleWithTOC";
 import FAQAccordion from "@/components/FAQAccordion";
 import RelatedTools from "@/components/RelatedTools";
+import Breadcrumb from "@/components/Breadcrumb";
+import SliderField from "@/components/SliderField";
+import InsightBanner from "@/components/InsightBanner";
 
 export default function RSUTaxCalculatorPage() {
   const [shares, setShares] = useState(100);
@@ -50,8 +54,23 @@ export default function RSUTaxCalculatorPage() {
     return Math.max(0, withGain.totalTax - without.totalTax);
   }, [sale, otherAnnualIncome]);
 
+  const insight = useMemo(() => {
+    if (sale.isLongTerm) return null;
+    const longTermSale = computeRSUSale({
+      sharesSold: shares,
+      costBasisINRPerShare: vest.fmvPerShareINR,
+      salePriceUSD,
+      usdInrRateAtSale: saleRate,
+      holdingMonthsFromVesting: 25,
+    });
+    const longTermTax = longTermSale.taxBeforeCess !== null ? longTermSale.taxBeforeCess * 1.04 : saleTax;
+    const delta = saleTax - longTermTax;
+    return delta > 0 ? { monthsToWait: 25 - holdingMonths, delta } : null;
+  }, [sale.isLongTerm, shares, vest.fmvPerShareINR, salePriceUSD, saleRate, holdingMonths, saleTax]);
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">
+      <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Calculators", href: "/" }, { label: "US Stocks & RSU Tax Calculator" }]} />
       <h1 className="text-3xl mb-2">US Stocks & RSU Tax Calculator</h1>
       <p className="text-charcoal/60 mb-4 max-w-xl">
         For RSUs of a foreign (typically US-listed) company vesting to an
@@ -70,10 +89,10 @@ export default function RSUTaxCalculatorPage() {
         <h2 className="text-xl mb-4">Stage 1 — Vesting (perquisite tax)</h2>
         <div className="grid lg:grid-cols-[1fr_380px] gap-10 mb-10">
           <div className="space-y-6 max-w-md">
-            <Field label="Shares vested" value={shares} onChange={setShares} suffix="shares" step={1} />
-            <Field label="FMV per share at vesting" value={fmvUSD} onChange={setFmvUSD} suffix="USD" />
-            <Field label="USD/INR rate (SBI TTBR, last day of prior month)" value={vestRate} onChange={setVestRate} suffix="₹ / $" />
-            <Field label="Your other annual income" value={otherAnnualIncome} onChange={setOtherAnnualIncome} suffix="₹ / year" />
+            <SliderField label="Shares vested" value={shares} onChange={setShares} suffix="shares" min={0} max={2000} step={10} />
+            <SliderField label="FMV per share at vesting" value={fmvUSD} onChange={setFmvUSD} suffix="USD" min={0} max={1000} step={1} />
+            <SliderField label="USD/INR rate (SBI TTBR, last day of prior month)" value={vestRate} onChange={setVestRate} suffix="₹ / $" min={70} max={100} step={0.5} />
+            <SliderField label="Your other annual income" value={otherAnnualIncome} onChange={setOtherAnnualIncome} suffix="₹ / year" min={0} max={5000000} step={50000} />
             <p className="text-xs text-charcoal/50 -mt-4">
               Use the SBI TT Buying Rate for the last working day of the
               month BEFORE your vesting month — not the vesting date's
@@ -102,13 +121,15 @@ export default function RSUTaxCalculatorPage() {
         <h2 className="text-xl mb-4">Stage 2 — Sale (capital gains)</h2>
         <div className="grid lg:grid-cols-[1fr_380px] gap-10">
           <div className="space-y-6 max-w-md">
-            <Field label="Sale price per share" value={salePriceUSD} onChange={setSalePriceUSD} suffix="USD" />
-            <Field label="USD/INR rate at sale (SBI TTBR)" value={saleRate} onChange={setSaleRate} suffix="₹ / $" />
-            <Field
+            <SliderField label="Sale price per share" value={salePriceUSD} onChange={setSalePriceUSD} suffix="USD" min={0} max={1000} step={1} />
+            <SliderField label="USD/INR rate at sale (SBI TTBR)" value={saleRate} onChange={setSaleRate} suffix="₹ / $" min={70} max={100} step={0.5} />
+            <SliderField
               label="Holding period from vesting date"
               value={holdingMonths}
               onChange={setHoldingMonths}
               suffix="months"
+              min={0}
+              max={60}
               step={1}
             />
             <p className="text-xs text-charcoal/50 -mt-4">
@@ -152,32 +173,56 @@ export default function RSUTaxCalculatorPage() {
         </p>
       </div>
 
+      {insight && (
+        <div className="mb-10 max-w-2xl">
+          <InsightBanner
+            message={`Waiting ${insight.monthsToWait} more month${insight.monthsToWait > 1 ? "s" : ""} for long-term treatment would save you ₹${Math.round(insight.delta).toLocaleString("en-IN")}`}
+          />
+        </div>
+      )}
+
       <div className="mb-20">
-        <ToolArticle title="Why the exchange rate date trips people up">
-          <p>
-            The single most common RSU tax filing error in India is using
-            the wrong exchange rate date. Rule 115/206 of the Income Tax
-            Rules is specific about which date's rate applies:
-          </p>
-          <FormulaBox>
-            Rate to use = SBI TT Buying Rate on the LAST WORKING DAY of the month BEFORE the vesting/sale month
-          </FormulaBox>
-          <p>
-            Not the vesting date itself, not the sale date itself, not
-            today's rate when you're filing. If your RSUs vested on 15
-            March, you'd use the SBI TTBR from the last working day of
-            February — not March 15th's rate. This is easy to get wrong
-            because it's genuinely unintuitive, and getting it wrong
-            changes your perquisite value and therefore your tax.
-          </p>
-          <p>
-            The same backward-looking rule applies separately to the sale
-            transaction, using its own preceding month. Multiple vesting
-            tranches in different months each need their own correctly
-            dated rate — there's no shortcut to using one average rate for
-            the year.
-          </p>
-        </ToolArticle>
+        <ArticleWithTOC
+          sections={[
+            {
+              id: "exchange-rate-rule",
+              label: "Why the exchange rate date trips people up",
+              content: (
+                <>
+                  <p>
+                    The single most common RSU tax filing error in India is
+                    using the wrong exchange rate date. Rule 115/206 of
+                    the Income Tax Rules is specific about which
+                    date&apos;s rate applies:
+                  </p>
+                  <FormulaBox>
+                    Rate to use = SBI TT Buying Rate on the LAST WORKING DAY of the month BEFORE the vesting/sale month
+                  </FormulaBox>
+                  <p>
+                    Not the vesting date itself, not the sale date itself,
+                    not today&apos;s rate when you&apos;re filing. If your
+                    RSUs vested on 15 March, you&apos;d use the SBI TTBR
+                    from the last working day of February — not March
+                    15th&apos;s rate.
+                  </p>
+                </>
+              ),
+            },
+            {
+              id: "multiple-tranches",
+              label: "Multiple vesting tranches",
+              content: (
+                <p>
+                  The same backward-looking rule applies separately to the
+                  sale transaction, using its own preceding month. Multiple
+                  vesting tranches in different months each need their own
+                  correctly dated rate — there&apos;s no shortcut to using
+                  one average rate for the year.
+                </p>
+              ),
+            },
+          ]}
+        />
       </div>
 
       <div className="mb-20">
@@ -210,35 +255,5 @@ export default function RSUTaxCalculatorPage() {
 
       <RelatedTools currentSlug="rsu-tax-calculator" />
     </div>
-  );
-}
-
-function Field({
-  label,
-  value,
-  onChange,
-  suffix,
-  step = 1,
-}: {
-  label: string;
-  value: number;
-  onChange: (v: number) => void;
-  suffix: string;
-  step?: number;
-}) {
-  return (
-    <label className="block">
-      <span className="text-sm font-medium text-ink block mb-1.5">{label}</span>
-      <div className="flex items-center gap-2">
-        <input
-          type="number"
-          value={value}
-          step={step}
-          onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-ink focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
-        />
-        <span className="text-xs text-charcoal/50 whitespace-nowrap">{suffix}</span>
-      </div>
-    </label>
   );
 }

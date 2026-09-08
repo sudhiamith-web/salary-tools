@@ -13,9 +13,12 @@ import {
 } from "recharts";
 import { computeAdvanceTax, TaxpayerCategory } from "@/lib/calculators/advanceTax";
 import { formatINR } from "@/lib/calculators/salary";
-import ToolArticle, { FormulaBox } from "@/components/ToolArticle";
+import { FormulaBox } from "@/components/ToolArticle";
+import ArticleWithTOC from "@/components/ArticleWithTOC";
 import FAQAccordion from "@/components/FAQAccordion";
 import RelatedTools from "@/components/RelatedTools";
+import Breadcrumb from "@/components/Breadcrumb";
+import SliderField from "@/components/SliderField";
 
 const categoryLabels: Record<TaxpayerCategory, { title: string; sub: string }> = {
   regular: { title: "Individual / Salaried / Business", sub: "Standard quarterly schedule" },
@@ -52,6 +55,7 @@ export default function AdvanceTaxCalculatorPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">
+      <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Calculators", href: "/" }, { label: "Advance Tax Calculator" }]} />
       <h1 className="text-3xl mb-2">Advance Tax Calculator</h1>
       <p className="text-charcoal/60 mb-10 max-w-xl">
         Check whether you're on track with your quarterly advance tax
@@ -81,11 +85,14 @@ export default function AdvanceTaxCalculatorPage() {
             </div>
           </div>
 
-          <Field
+          <SliderField
             label="Total estimated tax liability (annual)"
             value={totalTaxLiability}
             onChange={setTotalTaxLiability}
             suffix="₹ / year"
+            min={0}
+            max={2000000}
+            step={10000}
           />
           <p className="text-xs text-charcoal/50 -mt-4">
             Bring this figure from the New Regime or Old vs New Tax Regime
@@ -202,7 +209,7 @@ export default function AdvanceTaxCalculatorPage() {
               />
               <Tooltip formatter={(value: number) => formatINR(value)} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Bar dataKey="Cumulative target" fill="#2E5EFF" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="Cumulative target" fill="#6D28D9" radius={[4, 4, 0, 0]} />
               <Bar dataKey="Cumulative paid" fill="#0E9F6E" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -234,33 +241,50 @@ export default function AdvanceTaxCalculatorPage() {
       </div>
 
       <div className="mb-20">
-        <ToolArticle title="How the quarterly targets and penalties work">
-          <p>
-            Advance tax lets you pay your annual tax liability in
-            installments through the year rather than in one lump sum at
-            filing time — but missing the quarterly targets triggers
-            interest, calculated separately from whether you eventually pay
-            in full:
-          </p>
-          <FormulaBox>
-            Sec 234C interest = shortfall × 1% × months (3 for Q1-Q3, 1 for Q4)
-          </FormulaBox>
-          <p>
-            Note the required cumulative thresholds for 234C — 12%, 36%,
-            75%, 100% — are slightly lower than the commonly quoted 15%,
-            45%, 75%, 100% payment schedule. That gap exists specifically so
-            minor shortfalls in the first two quarters don't trigger
-            interest, as long as you're within a few percentage points.
-          </p>
-          <p>
-            Section 234B is a separate, often larger risk: if your total
-            advance tax across all four quarters comes in under 90% of your
-            actual liability, interest accrues at 1% per month on the full
-            remaining balance — and this keeps accruing every month until
-            you actually pay it, well past the financial year's end, unlike
-            234C which is fixed once each quarter closes.
-          </p>
-        </ToolArticle>
+        <ArticleWithTOC
+          sections={[
+            {
+              id: "how-it-works",
+              label: "How quarterly targets work",
+              content: (
+                <>
+                  <p>
+                    Advance tax lets you pay your annual tax liability in
+                    installments through the year rather than in one lump
+                    sum at filing time — but missing the quarterly targets
+                    triggers interest, calculated separately from whether
+                    you eventually pay in full:
+                  </p>
+                  <FormulaBox>
+                    Sec 234C interest = shortfall × 1% × months (3 for Q1-Q3, 1 for Q4)
+                  </FormulaBox>
+                  <p>
+                    Note the required cumulative thresholds for 234C — 12%,
+                    36%, 75%, 100% — are slightly lower than the commonly
+                    quoted 15%, 45%, 75%, 100% payment schedule. That gap
+                    exists specifically so minor shortfalls in the first
+                    two quarters don&apos;t trigger interest.
+                  </p>
+                </>
+              ),
+            },
+            {
+              id: "section-234b",
+              label: "The bigger risk: Section 234B",
+              content: (
+                <p>
+                  Section 234B is a separate, often larger risk: if your
+                  total advance tax across all four quarters comes in
+                  under 90% of your actual liability, interest accrues at
+                  1% per month on the full remaining balance — and this
+                  keeps accruing every month until you actually pay it,
+                  well past the financial year&apos;s end, unlike 234C
+                  which is fixed once each quarter closes.
+                </p>
+              ),
+            },
+          ]}
+        />
       </div>
 
       <div className="mb-20">

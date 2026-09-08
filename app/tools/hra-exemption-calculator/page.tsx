@@ -4,9 +4,12 @@ import { useMemo, useState } from "react";
 import { computeHRAExemption } from "@/lib/calculators/hra";
 import HRACard from "@/components/HRACard";
 import ProjectionSection, { ProjectionPoint } from "@/components/ProjectionSection";
-import ToolArticle, { FormulaBox } from "@/components/ToolArticle";
+import ArticleWithTOC, { FormulaBox } from "@/components/ArticleWithTOC";
 import FAQAccordion from "@/components/FAQAccordion";
 import RelatedTools from "@/components/RelatedTools";
+import Breadcrumb from "@/components/Breadcrumb";
+import SliderField from "@/components/SliderField";
+import InsightBanner from "@/components/InsightBanner";
 
 type Mode = "monthly" | "annual";
 
@@ -52,10 +55,26 @@ export default function HRAExemptionCalculatorPage() {
     }));
   }, [basic, hraReceived, isMetro, mode]);
 
+  const insight = useMemo(() => {
+    const factor = mode === "monthly" ? 12 : 1;
+    const bump = mode === "monthly" ? 3000 : 36000;
+    const bumped = computeHRAExemption({
+      basicAnnual: basic * factor,
+      hraReceivedAnnual: hraReceived * factor,
+      rentPaidAnnual: (rentPaid + bump) * factor,
+      isMetro,
+    });
+    const delta = bumped.exemptAnnual - result.exemptAnnual;
+    return delta > 0
+      ? { bump, delta }
+      : null;
+  }, [basic, hraReceived, rentPaid, isMetro, mode, result.exemptAnnual]);
+
   const unit = mode === "monthly" ? "₹ / month" : "₹ / year";
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">
+      <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Calculators", href: "/" }, { label: "HRA Exemption Calculator" }]} />
       <h1 className="text-3xl mb-2">HRA Exemption Calculator</h1>
       <p className="text-charcoal/60 mb-4 max-w-xl">
         Find out how much of your House Rent Allowance is actually tax-free
@@ -93,9 +112,33 @@ export default function HRAExemptionCalculatorPage() {
             </div>
           </div>
 
-          <Field label="Basic salary" value={basic} onChange={setBasic} suffix={unit} />
-          <Field label="HRA received" value={hraReceived} onChange={setHraReceived} suffix={unit} />
-          <Field label="Rent actually paid" value={rentPaid} onChange={setRentPaid} suffix={unit} />
+          <SliderField
+            label="Basic salary"
+            value={basic}
+            onChange={setBasic}
+            suffix={unit}
+            min={mode === "monthly" ? 10000 : 120000}
+            max={mode === "monthly" ? 200000 : 2400000}
+            step={mode === "monthly" ? 1000 : 12000}
+          />
+          <SliderField
+            label="HRA received"
+            value={hraReceived}
+            onChange={setHraReceived}
+            suffix={unit}
+            min={mode === "monthly" ? 5000 : 60000}
+            max={mode === "monthly" ? 100000 : 1200000}
+            step={mode === "monthly" ? 500 : 6000}
+          />
+          <SliderField
+            label="Rent actually paid"
+            value={rentPaid}
+            onChange={setRentPaid}
+            suffix={unit}
+            min={mode === "monthly" ? 5000 : 60000}
+            max={mode === "monthly" ? 100000 : 1200000}
+            step={mode === "monthly" ? 500 : 6000}
+          />
 
           <div>
             <span className="text-sm font-medium text-ink block mb-1.5">City type</span>
@@ -127,6 +170,14 @@ export default function HRAExemptionCalculatorPage() {
         <HRACard result={result} />
       </div>
 
+      {insight && (
+        <div className="mb-10 max-w-2xl">
+          <InsightBanner
+            message={`Increase rent input by ₹${insight.bump.toLocaleString("en-IN")} to raise your exemption by ₹${Math.round(insight.delta).toLocaleString("en-IN")}${mode === "monthly" ? "/yr" : ""}`}
+          />
+        </div>
+      )}
+
       <div className="max-w-2xl mb-20">
         <ProjectionSection
           title="How your exemption changes with rent"
@@ -137,28 +188,47 @@ export default function HRAExemptionCalculatorPage() {
       </div>
 
       <div className="mb-20">
-        <ToolArticle title="How the HRA exemption is actually calculated">
-          <p>
-            Section 10(13A) exempts the LEAST of three amounts — not all of
-            your HRA, and not automatically the full rent you pay either:
-          </p>
-          <FormulaBox>
-            Exempt HRA = MIN(actual HRA received, rent paid − 10% of basic,
-            50% or 40% of basic)
-          </FormulaBox>
-          <p>
-            The third condition is why city matters: employees in Delhi,
-            Mumbai, Kolkata, or Chennai get a 50%-of-basic ceiling, while
-            everyone else is capped at 40%. Whatever HRA isn't exempt under
-            these rules still gets taxed as regular salary income.
-          </p>
-          <p>
-            This only helps you if you're on the old tax regime — the new
-            regime doesn't offer this exemption at all, so if you've moved
-            to the new regime, this calculator's result becomes purely
-            informational rather than something you can actually claim.
-          </p>
-        </ToolArticle>
+        <ArticleWithTOC
+          sections={[
+            {
+              id: "how-calculated",
+              label: "How the exemption is calculated",
+              content: (
+                <>
+                  <p>
+                    Section 10(13A) exempts the LEAST of three amounts —
+                    not all of your HRA, and not automatically the full
+                    rent you pay either:
+                  </p>
+                  <FormulaBox>
+                    Exempt HRA = MIN(actual HRA received, rent paid − 10% of basic,
+                    50% or 40% of basic)
+                  </FormulaBox>
+                  <p>
+                    The third condition is why city matters: employees in
+                    Delhi, Mumbai, Kolkata, or Chennai get a 50%-of-basic
+                    ceiling, while everyone else is capped at 40%. Whatever
+                    HRA isn&apos;t exempt under these rules still gets
+                    taxed as regular salary income.
+                  </p>
+                </>
+              ),
+            },
+            {
+              id: "regime-note",
+              label: "Only under the old regime",
+              content: (
+                <p>
+                  This only helps you if you&apos;re on the old tax regime
+                  — the new regime doesn&apos;t offer this exemption at
+                  all, so if you&apos;ve moved to the new regime, this
+                  calculator&apos;s result becomes purely informational
+                  rather than something you can actually claim.
+                </p>
+              ),
+            },
+          ]}
+        />
       </div>
 
       <div className="mb-20">

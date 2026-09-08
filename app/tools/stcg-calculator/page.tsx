@@ -1,12 +1,16 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { computeSTCG } from "@/lib/calculators/capitalGains";
+import { computeSTCG, computeLTCG } from "@/lib/calculators/capitalGains";
 import { formatINR } from "@/lib/calculators/salary";
-import ToolArticle, { FormulaBox } from "@/components/ToolArticle";
+import { FormulaBox } from "@/components/ToolArticle";
+import ArticleWithTOC from "@/components/ArticleWithTOC";
 import FAQAccordion from "@/components/FAQAccordion";
 import RelatedTools from "@/components/RelatedTools";
 import ProjectionSection, { ProjectionPoint } from "@/components/ProjectionSection";
+import Breadcrumb from "@/components/Breadcrumb";
+import SliderField from "@/components/SliderField";
+import InsightBanner from "@/components/InsightBanner";
 
 export default function STCGCalculatorPage() {
   const [saleValue, setSaleValue] = useState(200000);
@@ -26,8 +30,15 @@ export default function STCGCalculatorPage() {
     }));
   }, [purchaseValue]);
 
+  const insight = useMemo(() => {
+    const asLTCG = computeLTCG({ saleValue, purchaseValue, expenses });
+    const delta = result.totalTax - asLTCG.totalTax;
+    return delta > 0 ? { delta } : null;
+  }, [saleValue, purchaseValue, expenses, result.totalTax]);
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">
+      <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Calculators", href: "/" }, { label: "STCG Calculator" }]} />
       <h1 className="text-3xl mb-2">STCG Calculator (Equity & Equity Mutual Funds)</h1>
       <p className="text-charcoal/60 mb-4 max-w-xl">
         Calculate short-term capital gains tax on listed shares and
@@ -41,9 +52,9 @@ export default function STCGCalculatorPage() {
 
       <div className="grid lg:grid-cols-[1fr_380px] gap-10 mb-20">
         <div className="space-y-6 max-w-md">
-          <Field label="Sale value" value={saleValue} onChange={setSaleValue} suffix="₹" />
-          <Field label="Purchase value" value={purchaseValue} onChange={setPurchaseValue} suffix="₹" />
-          <Field label="Brokerage / STT / other expenses" value={expenses} onChange={setExpenses} suffix="₹" />
+          <SliderField label="Sale value" value={saleValue} onChange={setSaleValue} suffix="₹" min={0} max={2000000} step={5000} />
+          <SliderField label="Purchase value" value={purchaseValue} onChange={setPurchaseValue} suffix="₹" min={0} max={2000000} step={5000} />
+          <SliderField label="Brokerage / STT / other expenses" value={expenses} onChange={setExpenses} suffix="₹" min={0} max={20000} step={100} />
           <p className="text-xs text-charcoal/50 pt-2">
             Assumes the holding period is 12 months or less. If it's over
             12 months, use the LTCG Calculator instead — you'll likely owe
@@ -95,29 +106,51 @@ export default function STCGCalculatorPage() {
         />
       </div>
 
+      {insight && (
+        <div className="mb-10 max-w-2xl">
+          <InsightBanner
+            message={`Holding this until it qualifies as long-term instead would save you ₹${Math.round(insight.delta).toLocaleString("en-IN")} in tax`}
+          />
+        </div>
+      )}
+
       <div className="mb-20">
-        <ToolArticle title="Why STCG hits harder than LTCG on equity">
-          <p>
-            Short-term capital gains on listed equity get none of the
-            treatment long-term gains get — no annual exemption, and a
-            higher rate:
-          </p>
-          <FormulaBox>STCG tax = gain × 20% × 1.04 (cess)</FormulaBox>
-          <p>
-            Even a ₹1,000 short-term gain is taxable in full — there's no
-            equivalent of LTCG's ₹1,25,000 buffer. This is one of the
-            clearest reasons long-term holding is tax-favored for equity:
-            the same gain taxed as LTCG instead would likely fall entirely
-            within the exemption, or be taxed at a lower 12.5% rate on
-            whatever exceeds it.
-          </p>
-          <p>
-            The rate was raised from 15% to 20% by the Finance (No. 2) Act,
-            2024, effective for transfers from 23 July 2024 onward — worth
-            knowing if you're comparing against older articles or
-            calculators that still quote 15%.
-          </p>
-        </ToolArticle>
+        <ArticleWithTOC
+          sections={[
+            {
+              id: "why-it-hits-harder",
+              label: "Why STCG hits harder",
+              content: (
+                <>
+                  <p>
+                    Short-term capital gains on listed equity get none of
+                    the treatment long-term gains get — no annual
+                    exemption, and a higher rate:
+                  </p>
+                  <FormulaBox>STCG tax = gain × 20% × 1.04 (cess)</FormulaBox>
+                  <p>
+                    Even a ₹1,000 short-term gain is taxable in full —
+                    there&apos;s no equivalent of LTCG&apos;s ₹1,25,000
+                    buffer. This is one of the clearest reasons long-term
+                    holding is tax-favored for equity.
+                  </p>
+                </>
+              ),
+            },
+            {
+              id: "rate-history",
+              label: "The rate change to know about",
+              content: (
+                <p>
+                  The rate was raised from 15% to 20% by the Finance (No.
+                  2) Act, 2024, effective for transfers from 23 July 2024
+                  onward — worth knowing if you&apos;re comparing against
+                  older articles or calculators that still quote 15%.
+                </p>
+              ),
+            },
+          ]}
+        />
       </div>
 
       <div className="mb-20">

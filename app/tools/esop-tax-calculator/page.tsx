@@ -4,9 +4,13 @@ import { useMemo, useState } from "react";
 import { computeESOPExercise, computeESOPSale } from "@/lib/calculators/esop";
 import { computeNewRegimeTax, formatINR } from "@/lib/calculators/salary";
 import Badge from "@/components/Badge";
-import ToolArticle, { FormulaBox } from "@/components/ToolArticle";
+import { FormulaBox } from "@/components/ToolArticle";
+import ArticleWithTOC from "@/components/ArticleWithTOC";
 import FAQAccordion from "@/components/FAQAccordion";
 import RelatedTools from "@/components/RelatedTools";
+import Breadcrumb from "@/components/Breadcrumb";
+import SliderField from "@/components/SliderField";
+import InsightBanner from "@/components/InsightBanner";
 
 export default function ESOPTaxCalculatorPage() {
   const [shares, setShares] = useState(1000);
@@ -51,8 +55,29 @@ export default function ESOPTaxCalculatorPage() {
     return Math.max(0, withGain.totalTax - without.totalTax);
   }, [sale, otherAnnualIncome]);
 
+  const insight = useMemo(() => {
+    if (sale.isLongTerm) return null;
+    const threshold = isListed ? 13 : 25;
+    const longTermSale = computeESOPSale({
+      sharesSold: shares,
+      fmvAtExercise,
+      salePrice,
+      isListed,
+      holdingMonthsFromExercise: threshold,
+    });
+    let longTermTax: number;
+    if (longTermSale.taxRate !== null && longTermSale.taxBeforeCess !== null) {
+      longTermTax = longTermSale.taxBeforeCess * 1.04;
+    } else {
+      longTermTax = saleTax;
+    }
+    const delta = saleTax - longTermTax;
+    return delta > 0 ? { monthsToWait: threshold - holdingMonths, delta } : null;
+  }, [sale.isLongTerm, isListed, shares, fmvAtExercise, salePrice, holdingMonths, saleTax]);
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">
+      <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Calculators", href: "/" }, { label: "ESOP Tax Calculator" }]} />
       <h1 className="text-3xl mb-2">ESOP Tax Calculator</h1>
       <p className="text-charcoal/60 mb-4 max-w-xl">
         ESOPs are taxed twice — once as salary perquisite at exercise, once
@@ -68,10 +93,10 @@ export default function ESOPTaxCalculatorPage() {
         <h2 className="text-xl mb-4">Stage 1 — Exercise (perquisite tax)</h2>
         <div className="grid lg:grid-cols-[1fr_380px] gap-10 mb-10">
           <div className="space-y-6 max-w-md">
-            <Field label="Shares exercised" value={shares} onChange={setShares} suffix="shares" step={1} />
-            <Field label="Exercise price (per share)" value={exercisePrice} onChange={setExercisePrice} suffix="₹" />
-            <Field label="FMV at exercise (per share)" value={fmvAtExercise} onChange={setFmvAtExercise} suffix="₹" />
-            <Field label="Your other annual income" value={otherAnnualIncome} onChange={setOtherAnnualIncome} suffix="₹ / year" />
+            <SliderField label="Shares exercised" value={shares} onChange={setShares} suffix="shares" min={0} max={10000} step={100} />
+            <SliderField label="Exercise price (per share)" value={exercisePrice} onChange={setExercisePrice} suffix="₹" min={0} max={2000} step={10} />
+            <SliderField label="FMV at exercise (per share)" value={fmvAtExercise} onChange={setFmvAtExercise} suffix="₹" min={0} max={5000} step={10} />
+            <SliderField label="Your other annual income" value={otherAnnualIncome} onChange={setOtherAnnualIncome} suffix="₹ / year" min={0} max={5000000} step={50000} />
           </div>
           <div className="card px-6 py-5">
             <p className="text-xs uppercase tracking-widest text-accent font-semibold mb-1">Perquisite tax owed</p>
@@ -111,12 +136,14 @@ export default function ESOPTaxCalculatorPage() {
                 </button>
               </div>
             </div>
-            <Field label="Sale price (per share)" value={salePrice} onChange={setSalePrice} suffix="₹" />
-            <Field
+            <SliderField label="Sale price (per share)" value={salePrice} onChange={setSalePrice} suffix="₹" min={0} max={10000} step={10} />
+            <SliderField
               label="Holding period from exercise date"
               value={holdingMonths}
               onChange={setHoldingMonths}
               suffix="months"
+              min={0}
+              max={60}
               step={1}
             />
           </div>
@@ -149,32 +176,56 @@ export default function ESOPTaxCalculatorPage() {
         </div>
       </div>
 
+      {insight && (
+        <div className="mb-10 max-w-2xl">
+          <InsightBanner
+            message={`Waiting ${insight.monthsToWait} more month${insight.monthsToWait > 1 ? "s" : ""} for long-term treatment would save you ₹${Math.round(insight.delta).toLocaleString("en-IN")}`}
+          />
+        </div>
+      )}
+
       <div className="mb-20">
-        <ToolArticle title="Why ESOPs get taxed twice — and why that's not double taxation">
-          <p>
-            The two-stage structure looks like double taxation at first
-            glance, but it isn't — each stage taxes a different gain:
-          </p>
-          <FormulaBox>
-            Stage 1: (FMV at exercise − exercise price) → salary{"\n"}
-            Stage 2: (Sale price − FMV at exercise) → capital gains
-          </FormulaBox>
-          <p>
-            The FMV at exercise becomes your cost basis for the capital
-            gains calculation specifically to prevent the appreciation
-            you've already paid perquisite tax on from being taxed again.
-            Only the gain that happens after exercise — the risk you took
-            by continuing to hold the shares — gets capital gains
-            treatment.
-          </p>
-          <p>
-            The exercise stage is often the harder one financially: you
-            owe real cash tax on a "paper gain" you can't necessarily sell
-            to fund, especially for unlisted startup shares with no ready
-            market. This is the most common ESOP surprise for employees at
-            private companies.
-          </p>
-        </ToolArticle>
+        <ArticleWithTOC
+          sections={[
+            {
+              id: "why-taxed-twice",
+              label: "Why ESOPs get taxed twice",
+              content: (
+                <>
+                  <p>
+                    The two-stage structure looks like double taxation at
+                    first glance, but it isn&apos;t — each stage taxes a
+                    different gain:
+                  </p>
+                  <FormulaBox>
+                    Stage 1: (FMV at exercise − exercise price) → salary{"\n"}
+                    Stage 2: (Sale price − FMV at exercise) → capital gains
+                  </FormulaBox>
+                  <p>
+                    The FMV at exercise becomes your cost basis for the
+                    capital gains calculation specifically to prevent the
+                    appreciation you&apos;ve already paid perquisite tax
+                    on from being taxed again.
+                  </p>
+                </>
+              ),
+            },
+            {
+              id: "cash-flow-problem",
+              label: "The exercise cash-flow problem",
+              content: (
+                <p>
+                  The exercise stage is often the harder one financially:
+                  you owe real cash tax on a &quot;paper gain&quot; you
+                  can&apos;t necessarily sell to fund, especially for
+                  unlisted startup shares with no ready market. This is
+                  the most common ESOP surprise for employees at private
+                  companies.
+                </p>
+              ),
+            },
+          ]}
+        />
       </div>
 
       <div className="mb-20">
@@ -207,35 +258,5 @@ export default function ESOPTaxCalculatorPage() {
 
       <RelatedTools currentSlug="esop-tax-calculator" />
     </div>
-  );
-}
-
-function Field({
-  label,
-  value,
-  onChange,
-  suffix,
-  step = 100,
-}: {
-  label: string;
-  value: number;
-  onChange: (v: number) => void;
-  suffix: string;
-  step?: number;
-}) {
-  return (
-    <label className="block">
-      <span className="text-sm font-medium text-ink block mb-1.5">{label}</span>
-      <div className="flex items-center gap-2">
-        <input
-          type="number"
-          value={value}
-          step={step}
-          onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-ink focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
-        />
-        <span className="text-xs text-charcoal/50 whitespace-nowrap">{suffix}</span>
-      </div>
-    </label>
   );
 }

@@ -38,13 +38,15 @@ export default function RootLayout({
         className={`${fraunces.variable} ${plexSans.variable} ${plexMono.variable}`}
       >
         <ConsentGate />
-        <header className="border-b border-slate-200 bg-white/80 backdrop-blur sticky top-0 z-40">
+        <header className="bg-ink sticky top-0 z-40">
           <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
-            <Link href="/" className="font-display text-xl text-ink">
-              Salary-Tools<span className="text-accent">.</span>
+            <Link href="/" className="font-display text-xl text-white">
+              Salary-Tools<span className="text-accentLight">.</span>
             </Link>
-            <nav className="text-sm text-charcoal/70 flex gap-6">
+            <nav className="text-sm flex items-center gap-6">
               <SiteNav />
+              <Link href="/blog" className="text-slate-300 hover:text-white">Blog</Link>
+              <Link href="/news" className="text-slate-300 hover:text-white">News</Link>
             </nav>
           </div>
         </header>

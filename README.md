@@ -3,6 +3,13 @@
 Salary, tax and HR calculators for Indian professionals. Built with Next.js
 14 (App Router) + Tailwind CSS + Recharts. Live at salary-tools.com.
 
+> **Full documentation:** this README is a short developer quick-reference.
+> For complete, maintainer-oriented documentation — architecture, deployment,
+> environment setup, the design system, a full reference for every
+> calculator's underlying tax law, and more — start at
+> [`DOCUMENTATION.md`](./DOCUMENTATION.md) or browse the [`docs/`](./docs)
+> folder.
+
 ## ⚠️ Upload instructions (read this before pushing to GitHub)
 
 Upload the CONTENTS of this folder directly into the repo root — NOT this
@@ -93,22 +100,88 @@ netlify.toml
 .env.local.example    — copy to .env.local, set NEXT_PUBLIC_GA_ID
 ```
 
-## Analytics setup
+## Blog & News (Sanity CMS)
+
+Content lives in Sanity, not in the codebase — publishing a post never
+requires a deploy. Sanity Studio is embedded in this same app at
+`/studio`, so there's nothing separate to host or deploy.
+
+**How it works:** write/publish in Studio → Sanity fires a webhook →
+`/api/revalidate` refreshes just the affected page (`revalidatePath` +
+`revalidateTag`) → the new/updated post is live within seconds. No
+GitHub, no Netlify, no rebuild.
+
+```
+sanity.config.ts              — Studio config (schema, project ID from env)
+sanity/schemaTypes/post.ts    — the Post content model (title, slug,
+                                 category: blog|news, cover image,
+                                 excerpt, rich text body, author, date)
+app/studio/[[...tool]]/page.tsx — embedded Studio route
+app/api/revalidate/route.ts   — webhook Sanity calls on publish/update
+lib/sanity/
+  client.ts                   — read-only Sanity client + image URL builder
+  queries.ts                  — GROQ queries (by category, by slug, all slugs)
+app/blog/  and  app/news/     — separate listing + [slug] detail pages,
+                                 sharing PostCard and PostBody components
+components/
+  PostCard.tsx                — listing card, used by both sections
+  PostBody.tsx                — Portable Text (rich text) renderer
+```
+
+### One-time setup (required before Blog/News work at all)
+
+1. Create a free account at sanity.io, then a new project via the web
+   dashboard (Manage Console) — no CLI needed. Note the Project ID.
+2. Set `NEXT_PUBLIC_SANITY_PROJECT_ID` and `NEXT_PUBLIC_SANITY_DATASET`
+   (usually `production`) as Netlify environment variables.
+3. In Sanity's dashboard → API → Webhooks, create a webhook pointing to
+   `https://salary-tools.com/api/revalidate`, filtered to the `post`
+   document type, with a secret you choose.
+4. Set that same secret as `SANITY_REVALIDATE_SECRET` in Netlify.
+5. Deploy once (this is the LAST deploy blog work ever needs). Visit
+   `salary-tools.com/studio`, sign in with your Sanity account, and
+   start writing. Every post after this point is deploy-free.
 
 Set `NEXT_PUBLIC_GA_ID` (format `G-XXXXXXXXXX`) as an environment variable
 in Netlify (Site configuration → Environment variables) and redeploy with
 cache cleared. Analytics only loads after a visitor accepts the cookie
 banner — see `ConsentGate.tsx`. See `.env.local.example` for local dev.
 
-## Design system
+## Design system (Royal Dark)
 
-Cool near-white background (`paper: #F7F9FC`), white floating cards with
-soft shadows (`.card` / `.card-flat` classes), bright blue accent
-(`accent: #2E5EFF`) as the primary interactive color, tinted callouts for
-info/insight/warnings (`.callout-info`, `.callout-insight`,
-`.callout-warn`), and a bright `.hero-box` for each tool's primary result
-number. Dotted-leader `.ledger-row` rows are kept for label→value detail
-breakdowns — the one surviving piece of the original paper/ledger look.
+Palette: `ink #111827` (dark nav, headings), `accent #6D28D9` / `accentDark
+#4C1D95` / `accentLight #A78BFA` / `accentTint #EDE9FE` (purple,
+interactive elements), `paper #FAFAFA` (page bg). `ledger` (green) and
+`rust` (red) are kept SEPARATE from the accent — they carry the
+financial "positive/negative" meaning in ledger rows and must not be
+repurposed for brand/interactive use.
+
+New structural components (see `components/`):
+- `Breadcrumb.tsx` — Home › Calculators › [Tool], present on all 16 tool pages
+- `SliderField.tsx` — number input + range slider, pairs with `Field`
+- `InsightBanner.tsx` — dynamic "X more → Y benefit" nudge; needs real
+  per-tool marginal-delta logic (see HRA and In-Hand Salary pages for
+  the pattern), not a generic message
+- `ArticleWithTOC.tsx` — two-column article layout with a sticky sidebar
+  table of contents; built but NOT YET applied to existing tool articles
+  (they still use the older stacked `ToolArticle` component) — retrofit
+  is a remaining task, see below
+- `SiteNav.tsx` — now renders ONE DROPDOWN PER CATEGORY (not one dropdown
+  containing all categories) — adding "Investments" or "Loans" to
+  `lib/tools.ts` later just adds another top-level nav item automatically
+
+### Rollout status: complete
+
+All 16 tools now have: the Royal Dark palette, a breadcrumb, `SliderField`
+inputs on primary numeric fields, a genuine `InsightBanner` with real
+per-tool marginal-delta logic (except Advance Tax, which has its own
+inline dynamic insight predating the shared component, and Salary vs
+Freelance, whose hero-box comparison already functions as the insight),
+and `ArticleWithTOC` with a sticky sidebar table of contents replacing
+the old stacked `ToolArticle` layout. `ToolArticle.tsx` is kept only for
+its `FormulaBox` export, which some pages still import from there instead
+of `ArticleWithTOC.tsx` — both export identical `FormulaBox` components,
+so either import path works.
 
 ## The standard tool-page template
 

@@ -48,4 +48,34 @@
   .hero-box {
     @apply bg-accentTint border border-accent/20 rounded-2xl px-6 py-5;
   }
+
+  /* Breadcrumb trail */
+  .breadcrumb {
+    @apply text-xs text-charcoal/50 flex items-center gap-1.5 mb-6;
+  }
+  .breadcrumb a {
+    @apply hover:text-accent;
+  }
+  .breadcrumb .current {
+    @apply text-accent font-medium;
+  }
+
+  /* Dynamic insight banner — the "increase X to get Y" nudge */
+  .insight-banner {
+    @apply bg-insightTint border border-insightTint rounded-xl px-4 py-3 text-sm text-accentDark flex items-center justify-between gap-3 flex-wrap;
+    border-color: theme("colors.accent" / 20%);
+  }
+
+  /* Range slider — paired with number fields */
+  input[type="range"].slider {
+    @apply w-full h-1.5 rounded-full bg-slate-200 appearance-none cursor-pointer accent-accent;
+  }
+
+  /* Sidebar table-of-contents for article sections */
+  .toc-link {
+    @apply block border-l-2 border-slate-200 pl-3 py-1.5 text-sm text-charcoal/60 hover:text-ink hover:border-slate-400 transition-colors;
+  }
+  .toc-link.active {
+    @apply border-accent text-ink font-medium;
+  }
 }

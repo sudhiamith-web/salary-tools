@@ -4,10 +4,14 @@ import { useMemo, useState } from "react";
 import { computeSection80D } from "@/lib/calculators/section80d";
 import { computeOldRegimeTax } from "@/lib/calculators/oldRegime";
 import { formatINR } from "@/lib/calculators/salary";
-import ToolArticle, { FormulaBox } from "@/components/ToolArticle";
+import { FormulaBox } from "@/components/ToolArticle";
+import ArticleWithTOC from "@/components/ArticleWithTOC";
 import FAQAccordion from "@/components/FAQAccordion";
 import RelatedTools from "@/components/RelatedTools";
 import Badge from "@/components/Badge";
+import Breadcrumb from "@/components/Breadcrumb";
+import SliderField from "@/components/SliderField";
+import InsightBanner from "@/components/InsightBanner";
 
 export default function Section80DCalculatorPage() {
   const [income, setIncome] = useState(1200000);
@@ -47,8 +51,38 @@ export default function Section80DCalculatorPage() {
     return Math.max(0, withoutDeduction.totalTax - withDeduction.totalTax);
   }, [income, result.totalDeduction]);
 
+  const insight = useMemo(() => {
+    if (preventiveCheckup >= 5000) return null;
+    const bumped = computeSection80D({
+      selfFamilyPremium,
+      selfFamilySenior,
+      parentsPremium,
+      parentsSenior,
+      preventiveCheckup: 5000,
+    });
+    const deductionDelta = bumped.totalDeduction - result.totalDeduction;
+    if (deductionDelta <= 0) return null;
+    const withBumped = computeOldRegimeTax({
+      grossAnnualIncome: income,
+      section80CDeduction: 0,
+      section80DDeduction: bumped.totalDeduction,
+      hraExemption: 0,
+      otherDeductions: 0,
+    });
+    const withCurrent = computeOldRegimeTax({
+      grossAnnualIncome: income,
+      section80CDeduction: 0,
+      section80DDeduction: result.totalDeduction,
+      hraExemption: 0,
+      otherDeductions: 0,
+    });
+    const delta = withCurrent.totalTax - withBumped.totalTax;
+    return delta > 0 ? { delta } : null;
+  }, [preventiveCheckup, selfFamilyPremium, selfFamilySenior, parentsPremium, parentsSenior, result.totalDeduction, income]);
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">
+      <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Calculators", href: "/" }, { label: "Section 80D Health Insurance Calculator" }]} />
       <h1 className="text-3xl mb-2">Section 80D Health Insurance Calculator</h1>
       <p className="text-charcoal/60 mb-10 max-w-xl">
         Work out your health insurance deduction across two independent
@@ -58,49 +92,56 @@ export default function Section80DCalculatorPage() {
 
       <div className="grid lg:grid-cols-[1fr_380px] gap-10 mb-20">
         <div className="space-y-6 max-w-md">
-          <Field label="Annual taxable income (before deductions, old regime)" value={income} onChange={setIncome} suffix="₹ / year" />
+          <SliderField
+            label="Annual taxable income (before deductions, old regime)"
+            value={income}
+            onChange={setIncome}
+            suffix="₹ / year"
+            min={300000}
+            max={5000000}
+            step={50000}
+          />
 
           <div>
-            <span className="text-sm font-medium text-ink block mb-1.5">Self & family premium</span>
-            <div className="flex items-center gap-2 mb-2">
-              <input
-                type="number"
-                value={selfFamilyPremium}
-                step={500}
-                onChange={(e) => setSelfFamilyPremium(Number(e.target.value))}
-                className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-ink focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
-              />
-              <span className="text-xs text-charcoal/50 whitespace-nowrap">₹ / year</span>
-            </div>
-            <label className="flex items-center gap-2 text-xs text-charcoal/60">
+            <SliderField
+              label="Self & family premium"
+              value={selfFamilyPremium}
+              onChange={setSelfFamilyPremium}
+              suffix="₹ / year"
+              min={0}
+              max={100000}
+              step={1000}
+            />
+            <label className="flex items-center gap-2 text-xs text-charcoal/60 mt-2">
               <input type="checkbox" checked={selfFamilySenior} onChange={(e) => setSelfFamilySenior(e.target.checked)} />
               Self, spouse, or a covered child is 60+ (raises limit to ₹50,000)
             </label>
           </div>
 
           <div>
-            <span className="text-sm font-medium text-ink block mb-1.5">Parents' premium</span>
-            <div className="flex items-center gap-2 mb-2">
-              <input
-                type="number"
-                value={parentsPremium}
-                step={500}
-                onChange={(e) => setParentsPremium(Number(e.target.value))}
-                className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-ink focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
-              />
-              <span className="text-xs text-charcoal/50 whitespace-nowrap">₹ / year</span>
-            </div>
-            <label className="flex items-center gap-2 text-xs text-charcoal/60">
+            <SliderField
+              label="Parents' premium"
+              value={parentsPremium}
+              onChange={setParentsPremium}
+              suffix="₹ / year"
+              min={0}
+              max={100000}
+              step={1000}
+            />
+            <label className="flex items-center gap-2 text-xs text-charcoal/60 mt-2">
               <input type="checkbox" checked={parentsSenior} onChange={(e) => setParentsSenior(e.target.checked)} />
               Either parent is 60+ (raises limit to ₹50,000)
             </label>
           </div>
 
-          <Field
+          <SliderField
             label="Preventive health checkup (sub-limit ₹5,000)"
             value={preventiveCheckup}
             onChange={setPreventiveCheckup}
             suffix="₹ / year"
+            min={0}
+            max={5000}
+            step={500}
           />
         </div>
 
@@ -146,29 +187,56 @@ export default function Section80DCalculatorPage() {
         </div>
       </div>
 
+      {insight && (
+        <div className="mb-10 max-w-2xl">
+          <InsightBanner
+            message={`Using the full ₹5,000 preventive checkup sub-limit would save you an extra ₹${Math.round(insight.delta).toLocaleString("en-IN")}`}
+          />
+        </div>
+      )}
+
       <div className="mb-20">
-        <ToolArticle title="Why 80D has two separate brackets">
-          <p>
-            Section 80D treats your own family and your parents as two
-            independent deduction buckets — each with its own limit based
-            on whether anyone covered in that bracket is a senior citizen:
-          </p>
-          <FormulaBox>
-            Total 80D = Self/family bracket (₹25k or ₹50k) + Parents bracket (₹25k or ₹50k)
-          </FormulaBox>
-          <p>
-            This is why someone with young parents can still claim up to
-            ₹75,000 combined if they themselves are a senior citizen, or up
-            to ₹1,00,000 if both they and their parents are 60+ — the two
-            brackets are genuinely independent, not a single shared limit.
-          </p>
-          <p>
-            The ₹5,000 preventive checkup deduction isn't extra money on
-            top — it's counted within whichever bracket has room, so it
-            only helps if you haven't already maxed out that bracket's
-            premium-based limit.
-          </p>
-        </ToolArticle>
+        <ArticleWithTOC
+          sections={[
+            {
+              id: "two-brackets",
+              label: "Why there are two brackets",
+              content: (
+                <>
+                  <p>
+                    Section 80D treats your own family and your parents as
+                    two independent deduction buckets — each with its own
+                    limit based on whether anyone covered in that bracket
+                    is a senior citizen:
+                  </p>
+                  <FormulaBox>
+                    Total 80D = Self/family bracket (₹25k or ₹50k) + Parents bracket (₹25k or ₹50k)
+                  </FormulaBox>
+                  <p>
+                    This is why someone with young parents can still claim
+                    up to ₹75,000 combined if they themselves are a senior
+                    citizen, or up to ₹1,00,000 if both they and their
+                    parents are 60+ — the two brackets are genuinely
+                    independent, not a single shared limit.
+                  </p>
+                </>
+              ),
+            },
+            {
+              id: "preventive-checkup",
+              label: "The preventive checkup sub-limit",
+              content: (
+                <p>
+                  The ₹5,000 preventive checkup deduction isn&apos;t extra
+                  money on top — it&apos;s counted within whichever
+                  bracket has room, so it only helps if you haven&apos;t
+                  already maxed out that bracket&apos;s premium-based
+                  limit.
+                </p>
+              ),
+            },
+          ]}
+        />
       </div>
 
       <div className="mb-20">

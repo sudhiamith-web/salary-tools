@@ -1,12 +1,19 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { computeProperty, CII_YEARS, GRANDFATHER_CUTOFF_YEAR } from "@/lib/calculators/property";
+import { computeProperty, CII_YEARS, GRANDFATHER_CUTOFF_YEAR, ImprovementEntry } from "@/lib/calculators/property";
 import { formatINR } from "@/lib/calculators/salary";
 import Badge from "@/components/Badge";
-import ToolArticle, { FormulaBox } from "@/components/ToolArticle";
+import { FormulaBox } from "@/components/ToolArticle";
+import ArticleWithTOC from "@/components/ArticleWithTOC";
 import FAQAccordion from "@/components/FAQAccordion";
 import RelatedTools from "@/components/RelatedTools";
+import Breadcrumb from "@/components/Breadcrumb";
+import SliderField from "@/components/SliderField";
+import InsightBanner from "@/components/InsightBanner";
+import ImprovementsInput from "@/components/ImprovementsInput";
+
+const SECTION_54EC_CAP = 5000000;
 
 export default function PropertyCapitalGainsCalculatorPage() {
   const [saleValue, setSaleValue] = useState(9000000);
@@ -16,6 +23,7 @@ export default function PropertyCapitalGainsCalculatorPage() {
   const [transferExpenses, setTransferExpenses] = useState(50000);
   const [section54, setSection54] = useState(0);
   const [section54EC, setSection54EC] = useState(0);
+  const [improvements, setImprovements] = useState<ImprovementEntry[]>([]);
 
   const isPreCutoff = purchaseYear < GRANDFATHER_CUTOFF_YEAR;
 
@@ -26,16 +34,28 @@ export default function PropertyCapitalGainsCalculatorPage() {
         purchaseValue,
         purchaseYear,
         saleYear,
+        improvements,
         transferExpenses,
         section54Exemption: section54,
         section54ECExemption: section54EC,
         isPreJuly2024Purchase: isPreCutoff,
       }),
-    [saleValue, purchaseValue, purchaseYear, saleYear, transferExpenses, section54, section54EC, isPreCutoff]
+    [saleValue, purchaseValue, purchaseYear, saleYear, improvements, transferExpenses, section54, section54EC, isPreCutoff]
   );
+
+  const insight = useMemo(() => {
+    const currentGain = result.chosenMethod === "with-indexation" ? result.indexedGain : result.gain;
+    const rate = result.chosenMethod === "with-indexation" ? 0.2 : 0.125;
+    const remainingGainAfterCurrentExemptions = Math.max(0, currentGain - result.exemptionsClaimed);
+    const additional54ECHeadroom = Math.max(0, SECTION_54EC_CAP - section54EC);
+    const additionalExemption = Math.min(remainingGainAfterCurrentExemptions, additional54ECHeadroom);
+    const delta = additionalExemption * rate * 1.04;
+    return delta > 0 ? { additionalExemption, delta } : null;
+  }, [result, section54EC]);
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">
+      <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Calculators", href: "/" }, { label: "Property Capital Gains Tax Calculator" }]} />
       <h1 className="text-3xl mb-2">Property Capital Gains Tax Calculator</h1>
       <p className="text-charcoal/60 mb-4 max-w-xl">
         For land and buildings held over 24 months. Automatically compares
@@ -50,8 +70,8 @@ export default function PropertyCapitalGainsCalculatorPage() {
 
       <div className="grid lg:grid-cols-[1fr_420px] gap-10 mb-20">
         <div className="space-y-6 max-w-md">
-          <Field label="Sale value" value={saleValue} onChange={setSaleValue} suffix="₹" />
-          <Field label="Purchase value" value={purchaseValue} onChange={setPurchaseValue} suffix="₹" />
+          <SliderField label="Sale value" value={saleValue} onChange={setSaleValue} suffix="₹" min={0} max={50000000} step={100000} />
+          <SliderField label="Purchase value" value={purchaseValue} onChange={setPurchaseValue} suffix="₹" min={0} max={50000000} step={100000} />
 
           <div>
             <span className="text-sm font-medium text-ink block mb-1.5">Purchase financial year</span>
@@ -84,9 +104,11 @@ export default function PropertyCapitalGainsCalculatorPage() {
             </select>
           </div>
 
-          <Field label="Transfer expenses (brokerage, legal, etc.)" value={transferExpenses} onChange={setTransferExpenses} suffix="₹" />
-          <Field label="Section 54 exemption (reinvested in residential property)" value={section54} onChange={setSection54} suffix="₹" />
-          <Field label="Section 54EC exemption (bonds, max ₹50L)" value={section54EC} onChange={setSection54EC} suffix="₹" />
+          <ImprovementsInput improvements={improvements} onChange={setImprovements} years={CII_YEARS} />
+
+          <SliderField label="Transfer expenses (brokerage, legal, etc.)" value={transferExpenses} onChange={setTransferExpenses} suffix="₹" min={0} max={1000000} step={10000} />
+          <SliderField label="Section 54 exemption (reinvested in residential property)" value={section54} onChange={setSection54} suffix="₹" min={0} max={20000000} step={100000} />
+          <SliderField label="Section 54EC exemption (bonds, max ₹50L)" value={section54EC} onChange={setSection54EC} suffix="₹" min={0} max={5000000} step={100000} />
         </div>
 
         <div className="space-y-4">
@@ -108,6 +130,13 @@ export default function PropertyCapitalGainsCalculatorPage() {
               <span className="fill" />
               <span className="value">{formatINR(result.gain)}</span>
             </div>
+            {result.totalImprovementCost > 0 && (
+              <div className="ledger-row">
+                <span className="label">Cost of improvement (indexed: {formatINR(result.indexedImprovementCost)})</span>
+                <span className="fill" />
+                <span className="value">{formatINR(result.totalImprovementCost)}</span>
+              </div>
+            )}
             {result.taxWithIndexation !== null && (
               <>
                 <div className="ledger-row">
@@ -143,37 +172,67 @@ export default function PropertyCapitalGainsCalculatorPage() {
         </div>
       </div>
 
+      {insight && (
+        <div className="mb-10 max-w-2xl">
+          <InsightBanner
+            message={`Adding ₹${Math.round(insight.additionalExemption).toLocaleString("en-IN")} more to Section 54EC bonds would save you ₹${Math.round(insight.delta).toLocaleString("en-IN")} more`}
+          />
+        </div>
+      )}
+
       <div className="mb-20">
-        <ToolArticle title="The grandfathering choice, explained">
-          <p>
-            Budget 2024 replaced indexed property taxation with a flat
-            12.5% rate — but gave people who'd already bought property
-            before the change a way to avoid an unfair retroactive hit:
-          </p>
-          <FormulaBox>
-            Tax = MIN(gain × 12.5%, indexed gain × 20%) — only if purchased before 23 July 2024
-          </FormulaBox>
-          <p>
-            Indexation adjusts your purchase price for inflation using the
-            Cost Inflation Index (CII), which shrinks your taxable gain —
-            valuable for property held many years through high inflation.
-            For property bought closer to the sale date, the inflation
-            adjustment is small, so the flat 12.5% rate usually wins
-            instead. This calculator computes both and shows you which
-            wins for your specific numbers, rather than assuming one is
-            always better.
-          </p>
-          <p>
-            Property bought on or after 23 July 2024 doesn't get this
-            choice at all — it's 12.5% without indexation, full stop.
-          </p>
-        </ToolArticle>
+        <ArticleWithTOC
+          sections={[
+            {
+              id: "grandfathering",
+              label: "The grandfathering choice",
+              content: (
+                <>
+                  <p>
+                    Budget 2024 replaced indexed property taxation with a
+                    flat 12.5% rate — but gave people who&apos;d already
+                    bought property before the change a way to avoid an
+                    unfair retroactive hit:
+                  </p>
+                  <FormulaBox>
+                    Tax = MIN(gain × 12.5%, indexed gain × 20%) — only if purchased before 23 July 2024
+                  </FormulaBox>
+                  <p>
+                    Indexation adjusts your purchase price for inflation
+                    using the Cost Inflation Index (CII), which shrinks
+                    your taxable gain — valuable for property held many
+                    years through high inflation. Property bought on or
+                    after 23 July 2024 doesn&apos;t get this choice at
+                    all — it&apos;s 12.5% without indexation, full stop.
+                  </p>
+                </>
+              ),
+            },
+            {
+              id: "exemptions",
+              label: "Reducing the gain further",
+              content: (
+                <p>
+                  Beyond the rate choice, Sections 54 and 54EC let you
+                  reduce the taxable gain itself by reinvesting — in
+                  another residential property, or in specified bonds
+                  within 6 months of the sale, respectively.
+                </p>
+              ),
+            },
+          ]}
+        />
       </div>
 
       <div className="mb-20">
         <h2 className="text-2xl mb-4">Frequently asked questions</h2>
         <FAQAccordion
           items={[
+            {
+              question: "How is cost of improvement indexed?",
+              answer:
+                "Each improvement is indexed separately, using the CII of the year the improvement was actually made — not your original purchase year. A renovation done 10 years after you bought the property gets 10 years less inflation adjustment than the original purchase cost. Improvements made before 1 April 2001 aren't eligible at all.",
+            },
             {
               question: "What if my property was purchased before 2001?",
               answer:
@@ -200,33 +259,5 @@ export default function PropertyCapitalGainsCalculatorPage() {
 
       <RelatedTools currentSlug="property-capital-gains-calculator" />
     </div>
-  );
-}
-
-function Field({
-  label,
-  value,
-  onChange,
-  suffix,
-}: {
-  label: string;
-  value: number;
-  onChange: (v: number) => void;
-  suffix: string;
-}) {
-  return (
-    <label className="block">
-      <span className="text-sm font-medium text-ink block mb-1.5">{label}</span>
-      <div className="flex items-center gap-2">
-        <input
-          type="number"
-          value={value}
-          step={1000}
-          onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-ink focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
-        />
-        <span className="text-xs text-charcoal/50 whitespace-nowrap">{suffix}</span>
-      </div>
-    </label>
   );
 }

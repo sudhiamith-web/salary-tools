@@ -4,14 +4,20 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { tools } from "@/lib/tools";
 
+// Renders one top-level dropdown per category, matching the reference
+// structure (each product line gets its own nav item). Today there's
+// only one category ("Salary & Tax"), so this shows as a single
+// dropdown — but adding "Investments" or "Loans" later just adds
+// another category to lib/tools.ts, no nav rework needed.
+
 export default function SiteNav() {
-  const [open, setOpen] = useState(false);
+  const [openCategory, setOpenCategory] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
+        setOpenCategory(null);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -21,37 +27,38 @@ export default function SiteNav() {
   const categories = Array.from(new Set(tools.map((t) => t.category)));
 
   return (
-    <div className="relative" ref={ref}>
-      <button
-        onClick={() => setOpen(!open)}
-        className="text-sm text-charcoal/70 flex items-center gap-1"
-      >
-        Tools
-        <span className={`text-xs transition-transform ${open ? "rotate-180" : ""}`}>▾</span>
-      </button>
-      {open && (
-        <div className="absolute right-0 top-full mt-2 w-72 bg-white border border-slate-200 rounded-xl shadow-xl py-2 z-50">
-          {categories.map((category) => (
-            <div key={category}>
-              <p className="px-4 pt-2 pb-1 text-xs uppercase tracking-widest text-charcoal/40 font-medium">
-                {category}
-              </p>
+    <div className="flex items-center gap-5" ref={ref}>
+      {categories.map((category) => (
+        <div key={category} className="relative">
+          <button
+            onClick={() => setOpenCategory(openCategory === category ? null : category)}
+            className="text-sm text-slate-300 hover:text-white flex items-center gap-1"
+          >
+            {category}
+            <span
+              className={`text-xs transition-transform ${openCategory === category ? "rotate-180" : ""}`}
+            >
+              ▾
+            </span>
+          </button>
+          {openCategory === category && (
+            <div className="absolute left-0 top-full mt-2 w-72 bg-white border border-slate-200 rounded-xl shadow-xl py-2 z-50">
               {tools
                 .filter((t) => t.category === category)
                 .map((tool) => (
                   <Link
                     key={tool.slug}
                     href={`/tools/${tool.slug}`}
-                    onClick={() => setOpen(false)}
+                    onClick={() => setOpenCategory(null)}
                     className="block px-4 py-2 text-sm text-charcoal/80 hover:bg-accentTint hover:text-accent"
                   >
                     {tool.name}
                   </Link>
                 ))}
             </div>
-          ))}
+          )}
         </div>
-      )}
+      ))}
     </div>
   );
 }

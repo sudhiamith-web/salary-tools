@@ -4,9 +4,12 @@ import { useMemo, useState } from "react";
 import { computeInHandSalary } from "@/lib/calculators/salary";
 import PayslipCard from "@/components/PayslipCard";
 import ProjectionSection, { ProjectionPoint } from "@/components/ProjectionSection";
-import ToolArticle, { FormulaBox } from "@/components/ToolArticle";
+import ArticleWithTOC, { FormulaBox } from "@/components/ArticleWithTOC";
 import FAQAccordion from "@/components/FAQAccordion";
 import RelatedTools from "@/components/RelatedTools";
+import Breadcrumb from "@/components/Breadcrumb";
+import SliderField from "@/components/SliderField";
+import InsightBanner from "@/components/InsightBanner";
 
 export default function InHandSalaryCalculatorPage() {
   const [ctc, setCtc] = useState(1200000);
@@ -39,8 +42,21 @@ export default function InHandSalaryCalculatorPage() {
     }));
   }, [basicPercent, pfRate, proTax]);
 
+  const insight = useMemo(() => {
+    const bump = 100000;
+    const bumped = computeInHandSalary({
+      annualCTC: ctc + bump,
+      basicPercentOfCTC: basicPercent,
+      employerPFRate: pfRate,
+      professionalTaxAnnual: proTax,
+    });
+    const delta = bumped.netMonthlyInHand - result.netMonthlyInHand;
+    return delta > 0 ? { bump, delta } : null;
+  }, [ctc, basicPercent, pfRate, proTax, result.netMonthlyInHand]);
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">
+      <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Calculators", href: "/" }, { label: "In-Hand Salary Calculator" }]} />
       <h1 className="text-3xl mb-2">In-Hand Salary Calculator</h1>
       <p className="text-charcoal/60 mb-10 max-w-xl">
         Estimate your monthly take-home from your annual CTC, using the new
@@ -50,7 +66,15 @@ export default function InHandSalaryCalculatorPage() {
 
       <div className="grid lg:grid-cols-[1fr_380px] gap-10 mb-20">
         <div className="space-y-6 max-w-md">
-          <Field label="Annual CTC" value={ctc} onChange={setCtc} suffix="₹ / year" />
+          <SliderField
+            label="Annual CTC"
+            value={ctc}
+            onChange={setCtc}
+            suffix="₹ / year"
+            min={300000}
+            max={5000000}
+            step={50000}
+          />
           <Field
             label="Basic salary (% of CTC)"
             value={basicPercent}
@@ -81,6 +105,14 @@ export default function InHandSalaryCalculatorPage() {
         <PayslipCard result={result} />
       </div>
 
+      {insight && (
+        <div className="mb-10 max-w-2xl">
+          <InsightBanner
+            message={`A ₹${insight.bump.toLocaleString("en-IN")} higher CTC would add roughly ₹${Math.round(insight.delta).toLocaleString("en-IN")}/month to your take-home`}
+          />
+        </div>
+      )}
+
       <div className="max-w-2xl mb-20">
         <ProjectionSection
           title="How take-home changes as CTC grows"
@@ -91,32 +123,47 @@ export default function InHandSalaryCalculatorPage() {
       </div>
 
       <div className="mb-20">
-        <ToolArticle title="Why your take-home is less than CTC ÷ 12">
-          <p>
-            CTC (Cost to Company) is what your employer spends on you
-            annually — it isn't what lands in your bank account each month.
-            Three things typically sit between the two:
-          </p>
-          <FormulaBox>
-            Take-home = CTC − Employer PF − Employee PF − Income tax − Professional tax
-          </FormulaBox>
-          <p>
-            Employer PF is a real cost to your employer, but it goes
-            directly into your provident fund account, not your salary
-            account — so while it's part of your CTC, it never appears as
-            take-home pay. Employee PF is deducted from what would
-            otherwise be your gross pay, for the same destination. Income
-            tax and professional tax are withheld and paid to the
-            government on your behalf.
-          </p>
-          <p>
-            The proportion of your CTC that's Basic salary matters more than
-            people expect — a higher Basic percentage means higher PF
-            contributions (which reduce take-home now but build retirement
-            savings) and can also change your HRA exemption eligibility if
-            you're on the old tax regime.
-          </p>
-        </ToolArticle>
+        <ArticleWithTOC
+          sections={[
+            {
+              id: "why-less-than-ctc",
+              label: "Why take-home is less than CTC ÷ 12",
+              content: (
+                <>
+                  <p>
+                    CTC (Cost to Company) is what your employer spends on
+                    you annually — it isn&apos;t what lands in your bank
+                    account each month. Three things typically sit between
+                    the two:
+                  </p>
+                  <FormulaBox>
+                    Take-home = CTC − Employer PF − Employee PF − Income tax − Professional tax
+                  </FormulaBox>
+                  <p>
+                    Employer PF is a real cost to your employer, but it
+                    goes directly into your provident fund account, not
+                    your salary account — so while it&apos;s part of your
+                    CTC, it never appears as take-home pay.
+                  </p>
+                </>
+              ),
+            },
+            {
+              id: "basic-percentage",
+              label: "Why the Basic percentage matters",
+              content: (
+                <p>
+                  The proportion of your CTC that&apos;s Basic salary
+                  matters more than people expect — a higher Basic
+                  percentage means higher PF contributions (which reduce
+                  take-home now but build retirement savings) and can also
+                  change your HRA exemption eligibility if you&apos;re on
+                  the old tax regime.
+                </p>
+              ),
+            },
+          ]}
+        />
       </div>
 
       <div className="mb-20">

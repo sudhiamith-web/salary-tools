@@ -8,17 +8,19 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "#0F172A",
-        paper: "#F7F9FC",
-        paperDark: "#EDF1F7",
+        ink: "#111827",
+        paper: "#FAFAFA",
+        paperDark: "#F3F4F6",
         ledger: "#0E9F6E",
-        rust: "#E02424",
+        rust: "#DC2626",
         gold: "#C27803",
-        charcoal: "#334155",
-        accent: "#2E5EFF",
-        accentTint: "#EAF0FF",
-        insight: "#7C3AED",
-        insightTint: "#F3EEFF",
+        charcoal: "#374151",
+        accent: "#6D28D9",
+        accentDark: "#4C1D95",
+        accentLight: "#A78BFA",
+        accentTint: "#EDE9FE",
+        insight: "#4C1D95",
+        insightTint: "#F5F3FF",
       },
       fontFamily: {
         display: ["var(--font-fraunces)", "serif"],

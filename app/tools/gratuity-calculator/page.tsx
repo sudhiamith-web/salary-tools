@@ -5,9 +5,13 @@ import { computeGratuity, EmploymentCategory } from "@/lib/calculators/gratuity"
 import { formatINR } from "@/lib/calculators/salary";
 import Badge from "@/components/Badge";
 import ProjectionSection, { ProjectionPoint } from "@/components/ProjectionSection";
-import ToolArticle, { FormulaBox } from "@/components/ToolArticle";
+import { FormulaBox } from "@/components/ToolArticle";
+import ArticleWithTOC from "@/components/ArticleWithTOC";
 import FAQAccordion from "@/components/FAQAccordion";
 import RelatedTools from "@/components/RelatedTools";
+import Breadcrumb from "@/components/Breadcrumb";
+import SliderField from "@/components/SliderField";
+import InsightBanner from "@/components/InsightBanner";
 
 const categoryLabels: Record<EmploymentCategory, string> = {
   permanent: "Permanent employee",
@@ -45,8 +49,21 @@ export default function GratuityCalculatorPage() {
     }));
   }, [basicPlusDA, totalRemuneration, category]);
 
+  const insight = useMemo(() => {
+    if (!result.eligibleForGratuity) return null;
+    const bumped = computeGratuity({
+      basicPlusDA,
+      totalMonthlyRemuneration: totalRemuneration,
+      yearsOfService: years + 1,
+      employmentCategory: category,
+    });
+    const delta = bumped.gratuityAmount - result.gratuityAmount;
+    return delta > 0 ? { delta } : null;
+  }, [basicPlusDA, totalRemuneration, years, category, result.eligibleForGratuity, result.gratuityAmount]);
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">
+      <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Calculators", href: "/" }, { label: "Gratuity Calculator" }]} />
       <h1 className="text-3xl mb-2">Gratuity Calculator</h1>
       <p className="text-charcoal/60 mb-10 max-w-xl">
         Calculate your gratuity under the Payment of Gratuity Act, 1972, as
@@ -80,19 +97,38 @@ export default function GratuityCalculatorPage() {
             </div>
           </div>
 
-          <Field label="Basic + DA (monthly)" value={basicPlusDA} onChange={setBasicPlusDA} suffix="₹ / month" />
-          <Field
+          <SliderField
+            label="Basic + DA (monthly)"
+            value={basicPlusDA}
+            onChange={setBasicPlusDA}
+            suffix="₹ / month"
+            min={10000}
+            max={300000}
+            step={1000}
+          />
+          <SliderField
             label="Total monthly remuneration (optional)"
             value={totalRemuneration}
             onChange={setTotalRemuneration}
             suffix="₹ / month"
+            min={0}
+            max={500000}
+            step={1000}
           />
           <p className="text-xs text-charcoal/50 -mt-4">
             Fill this in if your Basic + DA is less than half your total pay
             — the 50% wage rule may raise your effective gratuity wage base.
           </p>
 
-          <Field label="Years of service" value={years} onChange={setYears} suffix="years" step={0.1} />
+          <SliderField
+            label="Years of service"
+            value={years}
+            onChange={setYears}
+            suffix="years"
+            min={0}
+            max={35}
+            step={0.5}
+          />
         </div>
 
         <div className="sticky top-6">
@@ -163,39 +199,78 @@ export default function GratuityCalculatorPage() {
         />
       </div>
 
+      {insight && (
+        <div className="mb-10 max-w-2xl">
+          <InsightBanner
+            message={`One more year of service would add ₹${Math.round(insight.delta).toLocaleString("en-IN")} to your gratuity`}
+          />
+        </div>
+      )}
+
       <div className="mb-20">
-        <ToolArticle title="How gratuity is calculated">
-          <p>
-            Gratuity is a lump-sum payment your employer owes you for
-            long-term service, under the Payment of Gratuity Act, 1972. The
-            formula itself hasn't changed under the new Labour Codes:
-          </p>
-          <FormulaBox>Gratuity = (15 / 26) × wage base × years of service</FormulaBox>
-          <p>
-            The "wage base" is your last drawn Basic salary plus Dearness
-            Allowance — not your full CTC. Two things changed when the
-            Labour Codes took effect on 21 November 2025:
-          </p>
-          <p>
-            <strong>Fixed-term employees</strong> now qualify for gratuity
-            after just 1 year of continuous service, on a pro-rata basis,
-            instead of waiting for the standard 5-year threshold that still
-            applies to permanent employees.
-          </p>
-          <p>
-            <strong>The 50% wage rule:</strong> if your allowances (HRA,
-            special allowance, and similar components) add up to more than
-            half your total pay, the excess now gets added back into the
-            wage base used for this calculation. In practice, this raises
-            the gratuity entitlement for many private-sector employees whose
-            salary structures lean heavily on allowances over basic pay.
-          </p>
-          <p>
-            Up to ₹20,00,000 of gratuity is exempt from tax under Section
-            10(10) for non-government employees; government employees get
-            full tax exemption regardless of amount.
-          </p>
-        </ToolArticle>
+        <ArticleWithTOC
+          sections={[
+            {
+              id: "formula",
+              label: "The formula",
+              content: (
+                <>
+                  <p>
+                    Gratuity is a lump-sum payment your employer owes you for
+                    long-term service, under the Payment of Gratuity Act,
+                    1972. The formula itself hasn&apos;t changed under the
+                    new Labour Codes:
+                  </p>
+                  <FormulaBox>Gratuity = (15 / 26) × wage base × years of service</FormulaBox>
+                  <p>
+                    The &quot;wage base&quot; is your last drawn Basic
+                    salary plus Dearness Allowance — not your full CTC.
+                  </p>
+                </>
+              ),
+            },
+            {
+              id: "labour-codes",
+              label: "What the Labour Codes changed",
+              content: (
+                <>
+                  <p>
+                    Two things changed when the Labour Codes took effect on
+                    21 November 2025:
+                  </p>
+                  <p>
+                    <strong>Fixed-term employees</strong> now qualify for
+                    gratuity after just 1 year of continuous service, on a
+                    pro-rata basis, instead of waiting for the standard
+                    5-year threshold that still applies to permanent
+                    employees.
+                  </p>
+                  <p>
+                    <strong>The 50% wage rule:</strong> if your allowances
+                    (HRA, special allowance, and similar components) add up
+                    to more than half your total pay, the excess now gets
+                    added back into the wage base used for this
+                    calculation. In practice, this raises the gratuity
+                    entitlement for many private-sector employees whose
+                    salary structures lean heavily on allowances over basic
+                    pay.
+                  </p>
+                </>
+              ),
+            },
+            {
+              id: "tax-treatment",
+              label: "Tax treatment",
+              content: (
+                <p>
+                  Up to ₹20,00,000 of gratuity is exempt from tax under
+                  Section 10(10) for non-government employees; government
+                  employees get full tax exemption regardless of amount.
+                </p>
+              ),
+            },
+          ]}
+        />
       </div>
 
       <div className="mb-20">

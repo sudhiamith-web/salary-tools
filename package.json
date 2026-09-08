@@ -12,7 +12,13 @@
     "next": "14.2.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "recharts": "^2.12.7"
+    "recharts": "^2.12.7",
+    "sanity": "^3.57.0",
+    "next-sanity": "^9.4.4",
+    "@sanity/vision": "^3.57.0",
+    "@sanity/image-url": "^1.1.0",
+    "@portabletext/react": "^3.1.0",
+    "styled-components": "^6.1.11"
   },
   "devDependencies": {
     "@types/node": "^20.14.9",

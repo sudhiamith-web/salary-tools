@@ -35,8 +35,8 @@ export default function ProjectionSection({
           <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id="projectionFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#2E5EFF" stopOpacity={0.25} />
-                <stop offset="100%" stopColor="#2E5EFF" stopOpacity={0} />
+                <stop offset="0%" stopColor="#6D28D9" stopOpacity={0.25} />
+                <stop offset="100%" stopColor="#6D28D9" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#CBD5E1" strokeOpacity={0.6} vertical={false} />
@@ -52,7 +52,7 @@ export default function ProjectionSection({
               formatter={(value: number) => [formatINR(value), valueLabel]}
               contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid rgba(22,40,58,0.15)" }}
             />
-            <Area type="monotone" dataKey="value" stroke="#2E5EFF" strokeWidth={2} fill="url(#projectionFill)" />
+            <Area type="monotone" dataKey="value" stroke="#6D28D9" strokeWidth={2} fill="url(#projectionFill)" />
           </AreaChart>
         </ResponsiveContainer>
       </div>

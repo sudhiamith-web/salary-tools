@@ -4,9 +4,14 @@ import { useMemo, useState } from "react";
 import { computeNewRegimeTax, formatINR } from "@/lib/calculators/salary";
 import { computeLTCG, computeSTCG } from "@/lib/calculators/capitalGains";
 import Badge from "@/components/Badge";
-import ToolArticle, { FormulaBox } from "@/components/ToolArticle";
+import { LTCG_EXEMPTION } from "@/lib/calculators/capitalGains";
+import { FormulaBox } from "@/components/ToolArticle";
+import ArticleWithTOC from "@/components/ArticleWithTOC";
 import FAQAccordion from "@/components/FAQAccordion";
 import RelatedTools from "@/components/RelatedTools";
+import Breadcrumb from "@/components/Breadcrumb";
+import SliderField from "@/components/SliderField";
+import InsightBanner from "@/components/InsightBanner";
 
 export default function SalaryCapitalGainsCalculatorPage() {
   const [salaryIncome, setSalaryIncome] = useState(1500000);
@@ -26,8 +31,14 @@ export default function SalaryCapitalGainsCalculatorPage() {
   const totalTax = salaryTax.totalTax + ltcg.totalTax + stcg.totalTax;
   const totalIncome = salaryIncome + ltcgGain + stcgGain;
 
+  const insight = useMemo(() => {
+    const headroom = LTCG_EXEMPTION - ltcgGain;
+    return headroom > 0 ? { headroom } : null;
+  }, [ltcgGain]);
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">
+      <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Calculators", href: "/" }, { label: "Salary + Capital Gains Tax Calculator" }]} />
       <h1 className="text-3xl mb-2">Salary + Capital Gains Tax Calculator</h1>
       <p className="text-charcoal/60 mb-4 max-w-xl">
         See your combined tax liability when you have both salary income
@@ -43,9 +54,9 @@ export default function SalaryCapitalGainsCalculatorPage() {
 
       <div className="grid lg:grid-cols-[1fr_420px] gap-10 mb-20">
         <div className="space-y-6 max-w-md">
-          <Field label="Annual salary income (gross)" value={salaryIncome} onChange={setSalaryIncome} suffix="₹ / year" />
-          <Field label="Equity LTCG (long-term gain)" value={ltcgGain} onChange={setLtcgGain} suffix="₹ / year" />
-          <Field label="Equity STCG (short-term gain)" value={stcgGain} onChange={setStcgGain} suffix="₹ / year" />
+          <SliderField label="Annual salary income (gross)" value={salaryIncome} onChange={setSalaryIncome} suffix="₹ / year" min={0} max={5000000} step={50000} />
+          <SliderField label="Equity LTCG (long-term gain)" value={ltcgGain} onChange={setLtcgGain} suffix="₹ / year" min={0} max={2000000} step={10000} />
+          <SliderField label="Equity STCG (short-term gain)" value={stcgGain} onChange={setStcgGain} suffix="₹ / year" min={0} max={1000000} step={5000} />
           <p className="text-xs text-charcoal/50 pt-2">
             Assumes the new tax regime for salary. Capital gains rates
             (12.5% LTCG, 20% STCG) are fixed regardless of regime choice.
@@ -102,28 +113,56 @@ export default function SalaryCapitalGainsCalculatorPage() {
         </div>
       </div>
 
+      {insight && (
+        <div className="mb-10 max-w-2xl">
+          <InsightBanner
+            message={`You have ₹${Math.round(insight.headroom).toLocaleString("en-IN")} of LTCG exemption headroom left this year`}
+          />
+        </div>
+      )}
+
       <div className="mb-20">
-        <ToolArticle title="Why capital gains don't push you into a higher salary tax bracket">
-          <p>
-            A common misconception is that capital gains get added to your
-            total income and pushed through the same progressive slabs as
-            salary. They don't — equity capital gains are taxed at their
-            own fixed rates, entirely separate from your slab-based salary
-            tax:
-          </p>
-          <FormulaBox>
-            Total tax = Tax(salary alone, at slabs) + LTCG × 12.5% + STCG × 20%
-          </FormulaBox>
-          <p>
-            This means a large capital gain doesn't retroactively increase
-            the tax rate on your salary — the two income streams are
-            computed independently and simply added together at the end.
-            The main place they do interact: the LTCG exemption threshold
-            (₹1,25,000) and the Section 87A rebate calculations use total
-            income in specific ways, which is why it's worth running your
-            actual numbers rather than assuming they're purely additive.
-          </p>
-        </ToolArticle>
+        <ArticleWithTOC
+          sections={[
+            {
+              id: "how-they-combine",
+              label: "How the two income streams combine",
+              content: (
+                <>
+                  <p>
+                    A common misconception is that capital gains get added
+                    to your total income and pushed through the same
+                    progressive slabs as salary. They don&apos;t — equity
+                    capital gains are taxed at their own fixed rates,
+                    entirely separate from your slab-based salary tax:
+                  </p>
+                  <FormulaBox>
+                    Total tax = Tax(salary alone, at slabs) + LTCG × 12.5% + STCG × 20%
+                  </FormulaBox>
+                  <p>
+                    This means a large capital gain doesn&apos;t
+                    retroactively increase the tax rate on your salary —
+                    the two income streams are computed independently and
+                    simply added together at the end.
+                  </p>
+                </>
+              ),
+            },
+            {
+              id: "where-they-interact",
+              label: "Where they do interact",
+              content: (
+                <p>
+                  The main place they do interact: the LTCG exemption
+                  threshold (₹1,25,000) and the Section 87A rebate
+                  calculations use total income in specific ways, which is
+                  why it&apos;s worth running your actual numbers rather
+                  than assuming they&apos;re purely additive.
+                </p>
+              ),
+            },
+          ]}
+        />
       </div>
 
       <div className="mb-20">
@@ -151,33 +190,5 @@ export default function SalaryCapitalGainsCalculatorPage() {
 
       <RelatedTools currentSlug="salary-capital-gains-calculator" />
     </div>
-  );
-}
-
-function Field({
-  label,
-  value,
-  onChange,
-  suffix,
-}: {
-  label: string;
-  value: number;
-  onChange: (v: number) => void;
-  suffix: string;
-}) {
-  return (
-    <label className="block">
-      <span className="text-sm font-medium text-ink block mb-1.5">{label}</span>
-      <div className="flex items-center gap-2">
-        <input
-          type="number"
-          value={value}
-          step={1000}
-          onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-ink focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
-        />
-        <span className="text-xs text-charcoal/50 whitespace-nowrap">{suffix}</span>
-      </div>
-    </label>
   );
 }

@@ -4,9 +4,13 @@ import { useMemo, useState } from "react";
 import { computeNewRegimeTax, formatINR } from "@/lib/calculators/salary";
 import Badge from "@/components/Badge";
 import ProjectionSection, { ProjectionPoint } from "@/components/ProjectionSection";
-import ToolArticle, { FormulaBox } from "@/components/ToolArticle";
+import { FormulaBox } from "@/components/ToolArticle";
+import ArticleWithTOC from "@/components/ArticleWithTOC";
 import FAQAccordion from "@/components/FAQAccordion";
 import RelatedTools from "@/components/RelatedTools";
+import Breadcrumb from "@/components/Breadcrumb";
+import SliderField from "@/components/SliderField";
+import InsightBanner from "@/components/InsightBanner";
 
 export default function TDSCalculatorPage() {
   const [annualGrossSalary, setAnnualGrossSalary] = useState(1200000);
@@ -26,8 +30,16 @@ export default function TDSCalculatorPage() {
     }));
   }, []);
 
+  const insight = useMemo(() => {
+    if (monthsRemaining <= 1) return null;
+    const withFewerMonths = tax.totalTax / (monthsRemaining - 1);
+    const delta = withFewerMonths - monthlyTDS;
+    return delta > 0 ? { delta } : null;
+  }, [tax.totalTax, monthsRemaining, monthlyTDS]);
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">
+      <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Calculators", href: "/" }, { label: "TDS on Salary Calculator" }]} />
       <h1 className="text-3xl mb-2">TDS on Salary Calculator</h1>
       <p className="text-charcoal/60 mb-4 max-w-xl">
         Estimate the monthly tax your employer should be withholding from
@@ -42,17 +54,22 @@ export default function TDSCalculatorPage() {
 
       <div className="grid lg:grid-cols-[1fr_380px] gap-10 mb-20">
         <div className="space-y-6 max-w-md">
-          <Field
+          <SliderField
             label="Annual gross salary"
             value={annualGrossSalary}
             onChange={setAnnualGrossSalary}
             suffix="₹ / year"
+            min={300000}
+            max={5000000}
+            step={50000}
           />
-          <Field
+          <SliderField
             label="Months remaining in the financial year"
             value={monthsRemaining}
             onChange={setMonthsRemaining}
             suffix="months"
+            min={1}
+            max={12}
             step={1}
           />
         </div>
@@ -107,23 +124,49 @@ export default function TDSCalculatorPage() {
         />
       </div>
 
+      {insight && (
+        <div className="mb-10 max-w-2xl">
+          <InsightBanner
+            message={`With one fewer month remaining, your monthly TDS would rise by about ₹${Math.round(insight.delta).toLocaleString("en-IN")}`}
+          />
+        </div>
+      )}
+
       <div className="mb-20">
-        <ToolArticle title="How employers calculate TDS on salary">
-          <p>
-            Your employer doesn't wait until March to figure out your tax —
-            they estimate your full-year tax liability upfront, then divide
-            it across the remaining months of the financial year:
-          </p>
-          <FormulaBox>Monthly TDS = Estimated annual tax ÷ months remaining in FY</FormulaBox>
-          <p>
-            This estimate changes through the year as your employer gets
-            more information — a mid-year raise, a declared investment under
-            the old regime, or a bonus payout all cause your employer to
-            recalculate and adjust future months' TDS, sometimes sharply.
-            This is why your actual payslip TDS may not match a simple
-            annual-tax-divided-by-12 estimate.
-          </p>
-        </ToolArticle>
+        <ArticleWithTOC
+          sections={[
+            {
+              id: "how-calculated",
+              label: "How it's calculated",
+              content: (
+                <>
+                  <p>
+                    Your employer doesn&apos;t wait until March to figure out
+                    your tax — they estimate your full-year tax liability
+                    upfront, then divide it across the remaining months of
+                    the financial year:
+                  </p>
+                  <FormulaBox>Monthly TDS = Estimated annual tax ÷ months remaining in FY</FormulaBox>
+                </>
+              ),
+            },
+            {
+              id: "why-it-changes",
+              label: "Why it changes mid-year",
+              content: (
+                <p>
+                  This estimate changes through the year as your employer
+                  gets more information — a mid-year raise, a declared
+                  investment under the old regime, or a bonus payout all
+                  cause your employer to recalculate and adjust future
+                  months&apos; TDS, sometimes sharply. This is why your
+                  actual payslip TDS may not match a simple
+                  annual-tax-divided-by-12 estimate.
+                </p>
+              ),
+            },
+          ]}
+        />
       </div>
 
       <div className="mb-20">
