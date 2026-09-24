@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getPostBySlug, getAllSlugsByCategory } from "@/lib/sanity/queries";
 import { urlForImage } from "@/lib/sanity/client";
 import PostBody from "@/components/PostBody";
+import FAQAccordion from "@/components/FAQAccordion";
 
 export const revalidate = 3600;
 
@@ -48,6 +49,13 @@ export default async function NewsPostPage({ params }: { params: { slug: string 
         {post.authorName} · {date}
       </p>
       <PostBody value={post.body} />
+
+      {post.faqItems && post.faqItems.length > 0 && (
+        <div className="mt-14">
+          <h2 className="text-2xl mb-4">Frequently asked questions</h2>
+          <FAQAccordion items={post.faqItems} />
+        </div>
+      )}
     </div>
   );
 }
