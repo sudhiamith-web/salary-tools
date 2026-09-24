@@ -56,6 +56,37 @@ export const postType = defineType({
       validation: (rule) => rule.required(),
     }),
     defineField({
+      name: "faqItems",
+      title: "FAQ items",
+      type: "array",
+      description:
+        "Optional. Add Q&A pairs to show a FAQ block at the end of the post and get FAQPage rich-snippet markup in Google search results.",
+      of: [
+        {
+          type: "object",
+          name: "faqItem",
+          fields: [
+            defineField({
+              name: "question",
+              title: "Question",
+              type: "string",
+              validation: (rule) => rule.required(),
+            }),
+            defineField({
+              name: "answer",
+              title: "Answer",
+              type: "text",
+              rows: 3,
+              validation: (rule) => rule.required(),
+            }),
+          ],
+          preview: {
+            select: { title: "question" },
+          },
+        },
+      ],
+    }),
+    defineField({
       name: "authorName",
       title: "Author name",
       type: "string",

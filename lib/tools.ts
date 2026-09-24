@@ -2,7 +2,7 @@ export interface ToolMeta {
   slug: string;
   name: string;
   shortDesc: string;
-  category: "Salary & Tax";
+  category: "Salary & Tax" | "Compliance & PF";
 }
 
 // Only LIVE tools belong here. Unbuilt/planned tools are tracked
@@ -109,6 +109,12 @@ export const tools: ToolMeta[] = [
     name: "US Stocks & RSU Tax Calculator",
     shortDesc: "Foreign RSU vesting, forex rules, Schedule FA.",
     category: "Salary & Tax",
+  },
+  {
+    slug: "epf-wage-ceiling-calculator",
+    name: "EPF Wage Ceiling Calculator",
+    shortDesc: "₹15,000 → ₹25,000 ceiling: contribution, coverage & cost impact.",
+    category: "Compliance & PF",
   },
 ];
 

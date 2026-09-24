@@ -11,8 +11,14 @@ export interface PostSummary {
   publishedAt: string;
 }
 
+export interface FaqItem {
+  question: string;
+  answer: string;
+}
+
 export interface PostDetail extends PostSummary {
   body: any[];
+  faqItems?: FaqItem[];
 }
 
 const summaryProjection = `{
@@ -38,7 +44,8 @@ export async function getPostBySlug(category: "blog" | "news", slug: string): Pr
   return sanityClient.fetch(
     `*[_type == "post" && category == $category && slug.current == $slug][0]{
       ${summaryProjection.slice(1, -1)},
-      body
+      body,
+      faqItems
     }`,
     { category, slug },
     { next: { tags: [`post:${slug}`] } }
