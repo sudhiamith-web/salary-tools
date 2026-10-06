@@ -116,8 +116,27 @@ export const tools: ToolMeta[] = [
     shortDesc: "₹15,000 → ₹25,000 ceiling: contribution, coverage & cost impact.",
     category: "Compliance & PF",
   },
+  {
+    slug: "minimum-wage-checker",
+    name: "Minimum Wage Checker",
+    shortDesc: "Check a salary against your state's minimum wage, incl. the 50% rule.",
+    category: "Compliance & PF",
+  },
+  {
+    slug: "lwf-calculator",
+    name: "LWF Calculator",
+    shortDesc: "Labour Welfare Fund cost by state: deductions, employer share, due dates.",
+    category: "Compliance & PF",
+  },
 ];
 
+// Same-category tools first, then the rest, so compliance tools link to each
+// other and salary/tax tools keep showing salary/tax tools.
 export function relatedTools(currentSlug: string, count = 3): ToolMeta[] {
-  return tools.filter((t) => t.slug !== currentSlug).slice(0, count);
+  const current = tools.find((t) => t.slug === currentSlug);
+  const others = tools.filter((t) => t.slug !== currentSlug);
+  if (!current) return others.slice(0, count);
+  const same = others.filter((t) => t.category === current.category);
+  const rest = others.filter((t) => t.category !== current.category);
+  return [...same, ...rest].slice(0, count);
 }

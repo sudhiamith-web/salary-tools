@@ -1,18 +1,18 @@
-# Upload guide: Holidays, Minimum Wages, LWF (v2)
+# Upload guide: Holidays, Minimum Wages, LWF (v3)
 
-v2 replaces the earlier zip. Use only this one.
+v3 replaces the earlier zips. Use only this one.
 
 - 30 new files
-- 3 existing files replaced with full versions (no manual edits)
-- 1 existing file still to come: lib/tools.ts (see Step 4)
+- 4 existing files replaced with full versions (no manual edits)
 
-## Step 1: Drag-and-drop (29 files)
+## Step 1: Drag-and-drop (30 files)
 
 Drag these onto the repo root in GitHub's web uploader. When GitHub says a file
-already exists, that's expected for the 3 marked REPLACES.
+already exists, that's expected for the 4 marked REPLACES.
 
 ```
 lib/compliance/                 9 new files
+lib/tools.ts                    REPLACES existing (adds 2 tools; related tools prefer same category)
 components/compliance/          7 new files
 sanity/schemaTypes/compliance/  5 new files
 sanity/schemaTypes/index.ts     REPLACES existing (adds the 4 new types)
@@ -49,24 +49,18 @@ _type in ["post", "holidayList", "minimumWageNotification", "minimumWageSchedule
 Leave URL, secret and everything else as is. The same SANITY_REVALIDATE_SECRET
 already on Netlify is reused.
 
-## Step 4: lib/tools.ts (waiting on you)
-
-Paste your current lib/tools.ts into the chat. I'll send back the full file
-with the two new tools added, so nothing in your existing 18 entries changes.
-Until then the tool pages still work; they just won't show in the nav dropdown.
-
-## Step 5: Settings check
+## Step 4: Settings check
 
 sanity.io/manage → API → CORS origins: confirm `https://salary-tools.com` is
 listed (the minimum wage checker loads rates in the browser).
 
-## Step 6: Deploy
+## Step 5: Deploy
 
 1. Netlify: Trigger deploy → Clear cache and deploy site.
 2. Codespaces: `npx sanity deploy` so salary-tools.sanity.studio shows the new
    document types.
 
-## Step 7: Check
+## Step 6: Check
 
 - Publish a blog post edit in Studio and confirm it still updates (webhook
   log shows 200). This confirms the merged revalidate route works.
