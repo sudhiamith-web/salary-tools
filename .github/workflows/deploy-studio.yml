@@ -1,11 +1,28 @@
-import { defineCliConfig } from "sanity/cli";
+name: Deploy Sanity Studio
 
-export default defineCliConfig({
-  api: {
-    projectId: "f3c45rz4",
-    dataset: "production",
-  },
-  // Fixed hostname so `sanity deploy` never stops to ask for one
-  // (an automated GitHub Action can't answer prompts).
-  studioHost: "salary-tools",
-});
+on:
+  push:
+    branches: [main]
+    paths:
+      - "sanity/**"
+      - "sanity.config.ts"
+      - "sanity.cli.ts"
+      - "lib/compliance/states.ts"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install packages
+        run: npm install
+      - name: Deploy Studio
+        run: npx sanity deploy -y
+        env:
+          SANITY_AUTH_TOKEN: ${{ secrets.SANITY_AUTH_TOKEN }}
+          SANITY_STUDIO_PROJECT_ID: f3c45rz4
+          SANITY_STUDIO_DATASET: production
