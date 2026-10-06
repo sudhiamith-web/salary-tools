@@ -1,71 +1,78 @@
-# Upload guide: Holidays, Minimum Wages, LWF
+# Upload guide: Holidays, Minimum Wages, LWF (v2)
 
-31 new code files. Nothing in this zip overwrites an existing file.
-Then 3 small edits to existing files (see INTEGRATION_SNIPPETS.md) and 2 settings.
+v2 replaces the earlier zip. Use only this one.
 
-## Step 1: Drag-and-drop safe (27 files)
+- 30 new files
+- 3 existing files replaced with full versions (no manual edits)
+- 1 existing file still to come: lib/tools.ts (see Step 4)
 
-Drag these folders onto the repo root in GitHub's web uploader. They merge into
-your existing folders.
+## Step 1: Drag-and-drop (29 files)
+
+Drag these onto the repo root in GitHub's web uploader. When GitHub says a file
+already exists, that's expected for the 3 marked REPLACES.
 
 ```
-lib/compliance/            (9 files: states, types, format, sanityFetch, queries,
-                            wages, lwf, holidays, sitemap)
-components/compliance/     (7 files: Shared, StateGrid, HolidayHub, HolidayExplorer,
-                            MinimumWageExplorer, MinimumWageChecker, LwfCalculator)
-sanity/schemaTypes/compliance/  (5 files: shared, holidayList, minimumWage,
-                                 lwfRule, index)
-app/holidays/page.tsx
-app/minimum-wages/page.tsx
-app/lwf-rates/page.tsx
-app/tools/lwf-calculator/page.tsx
-app/tools/minimum-wage-checker/page.tsx
-app/api/revalidate/route.ts
+lib/compliance/                 9 new files
+components/compliance/          7 new files
+sanity/schemaTypes/compliance/  5 new files
+sanity/schemaTypes/index.ts     REPLACES existing (adds the 4 new types)
+app/sitemap.ts                  REPLACES existing (adds verified state pages)
+app/api/revalidate/route.ts     REPLACES existing (blog/news logic kept, compliance added)
+app/holidays/page.tsx           new
+app/minimum-wages/page.tsx      new
+app/lwf-rates/page.tsx          new
+app/tools/lwf-calculator/page.tsx          new
+app/tools/minimum-wage-checker/page.tsx    new
 ```
 
 ## Step 2: Manual paste, bracket folders (4 files)
 
-Use **Add file → Create new file**, type the full path including brackets,
-paste the content from the zip.
+Add file → Create new file, type the full path including brackets, paste the
+content from the zip.
 
-| Type this path exactly | Copy from zip |
-|---|---|
-| `app/holidays/[year]/page.tsx` | same path |
-| `app/holidays/[year]/[state]/page.tsx` | same path |
-| `app/minimum-wages/[state]/page.tsx` | same path |
-| `app/lwf-rates/[state]/page.tsx` | same path |
+| Type this path exactly |
+|---|
+| `app/holidays/[year]/page.tsx` |
+| `app/holidays/[year]/[state]/page.tsx` |
+| `app/minimum-wages/[state]/page.tsx` |
+| `app/lwf-rates/[state]/page.tsx` |
 
-## Step 3: Edit 3 existing files
+## Step 3: Update the existing Sanity webhook (no new webhook needed)
 
-Copy the snippets from `INTEGRATION_SNIPPETS.md` into:
+sanity.io/manage → project f3c45rz4 → API → Webhooks → open your existing
+`/api/revalidate` webhook → change the Filter to:
 
-1. `sanity/schemaTypes/index.ts`: register the 4 new document types
-2. `lib/tools.ts`: register the 2 new tools under "Compliance & PF"
-3. `app/sitemap.ts`: add verified state pages to the sitemap
+```
+_type in ["post", "holidayList", "minimumWageNotification", "minimumWageSchedule", "lwfRule"]
+```
 
-## Step 4: Settings (one time)
+Leave URL, secret and everything else as is. The same SANITY_REVALIDATE_SECRET
+already on Netlify is reused.
 
-1. **Sanity CORS** (sanity.io/manage → project f3c45rz4 → API → CORS origins):
-   confirm `https://salary-tools.com` is listed. The minimum wage checker
-   loads rates in the browser and needs this.
-2. **Instant updates (recommended)**: see "Webhook" in INTEGRATION_SNIPPETS.md.
-   Without it, pages still refresh on their own within an hour of publishing.
+## Step 4: lib/tools.ts (waiting on you)
 
-## Step 5: Deploy and redeploy Studio
+Paste your current lib/tools.ts into the chat. I'll send back the full file
+with the two new tools added, so nothing in your existing 18 entries changes.
+Until then the tool pages still work; they just won't show in the nav dropdown.
+
+## Step 5: Settings check
+
+sanity.io/manage → API → CORS origins: confirm `https://salary-tools.com` is
+listed (the minimum wage checker loads rates in the browser).
+
+## Step 6: Deploy
 
 1. Netlify: Trigger deploy → Clear cache and deploy site.
 2. Codespaces: `npx sanity deploy` so salary-tools.sanity.studio shows the new
-   document types. The embedded /studio picks them up from the Netlify deploy.
+   document types.
 
-## Step 6: Check
+## Step 7: Check
 
-- `/holidays`, `/minimum-wages`, `/lwf-rates` load and show all 36 states as
-  "Being verified".
-- Open any state page: it should say it's being verified. View source and
-  confirm `<meta name="robots" content="noindex, follow">`.
-- In Studio you should see: Holiday list, Minimum wage notification,
-  Minimum wage rates (per employment), LWF rule.
+- Publish a blog post edit in Studio and confirm it still updates (webhook
+  log shows 200). This confirms the merged revalidate route works.
+- `/holidays`, `/minimum-wages`, `/lwf-rates` load with all states as
+  "Being verified"; state pages carry `noindex, follow`.
+- Studio shows: Holiday list, Minimum wage notification, Minimum wage rates
+  (per employment), LWF rule.
 
-If a build fails, paste the Netlify build log here. The likeliest cause is an
-import name: these files assume `@/components/FAQAccordion` takes `items` and
-`@/components/RelatedTools` takes `currentSlug`, as on the EPF tool page.
+If the build fails, paste the Netlify build log.

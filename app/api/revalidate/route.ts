@@ -1,20 +1,57 @@
-import { revalidateTag } from "next/cache";
-import { NextResponse } from "next/server";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { NextRequest, NextResponse } from "next/server";
+import { parseBody } from "next-sanity/webhook";
 import { COMPLIANCE_TAG } from "@/lib/compliance/sanityFetch";
 
-/**
- * Sanity webhook target. When you publish a holiday list, wage notification,
- * wage schedule or LWF rule, Sanity calls this URL and every compliance page
- * refetches on its next visit. No Netlify deploy needed.
- *
- * Webhook URL: https://salary-tools.com/api/revalidate?secret=YOUR_SECRET
- * Env var on Netlify: SANITY_REVALIDATE_SECRET=YOUR_SECRET
- */
-export async function POST(req: Request) {
-  const secret = new URL(req.url).searchParams.get("secret");
-  if (!process.env.SANITY_REVALIDATE_SECRET || secret !== process.env.SANITY_REVALIDATE_SECRET) {
-    return NextResponse.json({ ok: false, message: "Invalid secret" }, { status: 401 });
+// Configure this same secret as the webhook secret in Sanity's dashboard
+// (Manage → API → Webhooks) and as SANITY_REVALIDATE_SECRET in Netlify's
+// environment variables. This proves the request actually came from
+// Sanity, not from someone guessing this URL.
+
+interface WebhookPayload {
+  _type: string;
+  category?: "blog" | "news";
+  slug?: { current?: string };
+}
+
+// Holidays, minimum wages and LWF documents. Publishing any of them
+// refreshes every compliance page (hubs, state pages, tools).
+const COMPLIANCE_TYPES = [
+  "holidayList",
+  "minimumWageNotification",
+  "minimumWageSchedule",
+  "lwfRule",
+];
+
+export async function POST(req: NextRequest) {
+  try {
+    const { body, isValidSignature } = await parseBody<WebhookPayload>(
+      req,
+      process.env.SANITY_REVALIDATE_SECRET
+    );
+
+    if (!isValidSignature) {
+      return NextResponse.json({ message: "Invalid signature" }, { status: 401 });
+    }
+    if (!body?._type) {
+      return NextResponse.json({ message: "No document type in payload" }, { status: 400 });
+    }
+
+    if (body._type === "post" && body.category) {
+      revalidateTag(`posts:${body.category}`);
+      revalidatePath(`/${body.category}`);
+      if (body.slug?.current) {
+        revalidateTag(`post:${body.slug.current}`);
+        revalidatePath(`/${body.category}/${body.slug.current}`);
+      }
+    }
+
+    if (COMPLIANCE_TYPES.includes(body._type)) {
+      revalidateTag(COMPLIANCE_TAG);
+    }
+
+    return NextResponse.json({ revalidated: true, type: body._type, now: Date.now() });
+  } catch (err) {
+    return NextResponse.json({ message: "Error revalidating", error: String(err) }, { status: 500 });
   }
-  revalidateTag(COMPLIANCE_TAG);
-  return NextResponse.json({ ok: true, revalidated: COMPLIANCE_TAG, at: new Date().toISOString() });
 }

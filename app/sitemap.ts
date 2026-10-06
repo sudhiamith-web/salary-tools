@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { tools } from "@/lib/tools";
 import { getAllSlugsByCategory } from "@/lib/sanity/queries";
+import { complianceSitemapEntries } from "@/lib/compliance/sitemap";
 
 const BASE_URL = "https://salary-tools.com";
 
@@ -39,10 +40,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     }));
   } catch {
-    // Sanity not configured yet, or a fetch error — sitemap still works
-    // for the static pages and tools, just without post URLs for now.
+    // Sanity unreachable: sitemap still lists static pages and tools.
   }
 
-  return [...staticPages, ...toolPages, ...blogPages, ...newsPages];
-}
+  // Holidays, minimum wages, LWF: hubs, the two tools, and VERIFIED state pages only.
+  // complianceSitemapEntries() also lists the two new tool URLs, so drop any
+  // duplicates already produced from lib/tools.ts.
+  let compliancePages: MetadataRoute.Sitemap = [];
+  try {
+    const toolUrls = new Set(toolPages.map((p) => p.url));
+    compliancePages = (await complianceSitemapEntries()).filter((p) => !toolUrls.has(p.url));
+  } catch {
+    // Sanity unreachable: skip compliance pages this time.
+  }
 
+  return [...staticPages, ...toolPages, ...blogPages, ...newsPages, ...compliancePages];
+}
