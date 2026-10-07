@@ -1,72 +1,41 @@
-# Upload guide: Holidays, Minimum Wages, LWF (v3)
+# Upload guide: Retirement, ESI and LWF tools
 
-v3 replaces the earlier zips. Use only this one.
+Three new pages, 14 new files. Nothing existing is changed except one edit to `lib/tools.ts`.
 
-- 30 new files
-- 4 existing files replaced with full versions (no manual edits)
+Your existing `lib/calculators/epfWageCeiling.ts` is reused as-is. Do not replace it.
 
-## Step 1: Drag-and-drop (30 files)
+## Set 1: drag-and-drop safe (no brackets in the path)
 
-Drag these onto the repo root in GitHub's web uploader. When GitHub says a file
-already exists, that's expected for the 4 marked REPLACES.
+Upload each folder's files into the matching folder in the repo.
 
-```
-lib/compliance/                 9 new files
-lib/tools.ts                    REPLACES existing (adds 2 tools; related tools prefer same category)
-components/compliance/          7 new files
-sanity/schemaTypes/compliance/  5 new files
-sanity/schemaTypes/index.ts     REPLACES existing (adds the 4 new types)
-app/sitemap.ts                  REPLACES existing (adds verified state pages)
-app/api/revalidate/route.ts     REPLACES existing (blog/news logic kept, compliance added)
-app/holidays/page.tsx           new
-app/minimum-wages/page.tsx      new
-app/lwf-rates/page.tsx          new
-app/tools/lwf-calculator/page.tsx          new
-app/tools/minimum-wage-checker/page.tsx    new
-```
+| Repo folder | Files |
+|---|---|
+| `lib/calculators/` | `retirementBenefits.ts`, `retirementTax.ts`, `esi.ts`, `lwf.ts`, `retirementShare.ts` |
+| `lib/data/` | `stateDeductions.ts` |
+| `components/retirement/` | `RetirementCalculator.tsx`, `fields.tsx`, `ResultLine.tsx`, `TimelineChart.tsx`, `format.ts` |
+| `components/statutory/` | `EsiMiniCalculator.tsx`, `LwfMiniCalculator.tsx`, `PageFaq.tsx` |
+| `app/tools/retirement-benefits-calculator/` | `page.tsx` |
+| `app/tools/esi-calculator/` | `page.tsx` |
+| `app/tools/lwf-benefits/` | `page.tsx` |
 
-## Step 2: Manual paste, bracket folders (4 files)
+None of these paths contain brackets, so drag-and-drop works. If GitHub flattens a folder, use "Create new file" and type the full path.
 
-Add file → Create new file, type the full path including brackets, paste the
-content from the zip.
+## Set 2: manual edit
 
-| Type this path exactly |
-|---|
-| `app/holidays/[year]/page.tsx` |
-| `app/holidays/[year]/[state]/page.tsx` |
-| `app/minimum-wages/[state]/page.tsx` |
-| `app/lwf-rates/[state]/page.tsx` |
+Open `lib/tools.ts` and add the three entries from `TOOLS_REGISTRY_SNIPPET.ts`. Rename the fields to match your existing entries. The main calculator goes under "Salary & Tax"; ESI and LWF go under "Compliance & PF" next to the EPF wage ceiling tool. Move them if you prefer.
 
-## Step 3: Update the existing Sanity webhook (no new webhook needed)
+## Check after deploy
 
-sanity.io/manage → project f3c45rz4 → API → Webhooks → open your existing
-`/api/revalidate` webhook → change the Filter to:
+1. `/tools/retirement-benefits-calculator` loads, and changing CTC updates the numbers.
+2. "Copy share link" copies a URL with `?s=`. Opening it in a private window restores the inputs.
+3. "Download PDF summary" opens the print dialog with inputs hidden.
+4. `/tools/esi-calculator` and `/tools/lwf-benefits` load, and their links to each other work.
+5. Run the Rich Results Test on all three URLs to confirm FAQPage markup.
 
-```
-_type in ["post", "holidayList", "minimumWageNotification", "minimumWageSchedule", "lwfRule"]
-```
+## Things that depend on your setup
 
-Leave URL, secret and everything else as is. The same SANITY_REVALIDATE_SECRET
-already on Netlify is reused.
-
-## Step 4: Settings check
-
-sanity.io/manage → API → CORS origins: confirm `https://salary-tools.com` is
-listed (the minimum wage checker loads rates in the browser).
-
-## Step 5: Deploy
-
-1. Netlify: Trigger deploy → Clear cache and deploy site.
-2. Codespaces: `npx sanity deploy` so salary-tools.sanity.studio shows the new
-   document types.
-
-## Step 6: Check
-
-- Publish a blog post edit in Studio and confirm it still updates (webhook
-  log shows 200). This confirms the merged revalidate route works.
-- `/holidays`, `/minimum-wages`, `/lwf-rates` load with all states as
-  "Being verified"; state pages carry `noindex, follow`.
-- Studio shows: Holiday list, Minimum wage notification, Minimum wage rates
-  (per employment), LWF rule.
-
-If the build fails, paste the Netlify build log.
+- **Colour tokens.** Gains use `text-ledger` and losses use `text-rust`. If your Tailwind theme names them differently, find-and-replace in `ResultLine.tsx` and `RetirementCalculator.tsx`.
+- **Shared components.** These pages use small local components for fields, FAQ and breadcrumb because I don't have your shared components' props. Paste `SliderField`, `FAQAccordion`, `Breadcrumb`, `RelatedTools` and `InsightBanner` and I'll switch the pages to them to match the standard template.
+- **Canonical URLs.** `alternates.canonical` is a relative path and needs `metadataBase` in your root layout. If you don't have it, use the full `https://salary-tools.com/...` URL.
+- **`/tools` and `/lwf-rates` links.** The breadcrumb links to `/tools` and the LWF page links to `/lwf-rates`. Change these if those routes don't exist yet.
+- **LWF and PT amounts.** These are manual inputs for now. Once your Sanity LWF schema is final, share its field names and I'll fetch verified rates by state.
