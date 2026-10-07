@@ -1,19 +1,12 @@
 "use client";
 
 // Stacked area chart: how EPF, NPS and accrued gratuity build up by age.
+// Colours follow the site palette (accent, accentLight, gold); see
+// docs/07-design-system.md if the palette changes.
 
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  Legend,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Area, AreaChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { TimelinePoint } from "@/lib/calculators/retirementBenefits";
-import { rupees, rupeesShort } from "./format";
+import { formatINR, rupeesShort } from "./format";
 
 export function TimelineChart({
   data,
@@ -26,9 +19,8 @@ export function TimelineChart({
   todaysValue: boolean;
   yearsToRetirement: number;
 }) {
-  // When showing today's value, deflate each year by inflation up to that year.
-  const annualInflation =
-    yearsToRetirement > 0 ? Math.pow(deflator, 1 / yearsToRetirement) - 1 : 0;
+  // For today's value, deflate each point by inflation up to that age.
+  const annualInflation = yearsToRetirement > 0 ? Math.pow(deflator, 1 / yearsToRetirement) - 1 : 0;
   const startAge = data[0]?.age ?? 0;
   const rows = data.map((p) => {
     const factor = todaysValue ? Math.pow(1 + annualInflation, p.age - startAge) : 1;
@@ -41,24 +33,37 @@ export function TimelineChart({
   });
 
   if (rows.length < 2) {
-    return <p className="text-sm text-slate-500">Set a retirement date in the future to see the timeline.</p>;
+    return <p className="text-sm text-charcoal/60">Set a retirement date in the future to see the timeline.</p>;
   }
 
   return (
-    <div className="h-72 w-full">
+    <div className="h-72 -ml-2">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: 8 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-          <XAxis dataKey="age" tick={{ fontSize: 12 }} tickFormatter={(a) => `${Math.round(Number(a))}`} />
-          <YAxis tick={{ fontSize: 12 }} width={72} tickFormatter={(v) => rupeesShort(Number(v))} />
-          <Tooltip
-            formatter={(v) => rupees(Number(v))}
-            labelFormatter={(a) => `Age ${a}`}
+        <AreaChart data={rows} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#CBD5E1" strokeOpacity={0.6} vertical={false} />
+          <XAxis
+            dataKey="age"
+            tick={{ fontSize: 11, fill: "#64748B" }}
+            axisLine={false}
+            tickLine={false}
+            tickFormatter={(a) => `${Math.round(Number(a))}`}
           />
-          <Legend />
-          <Area type="monotone" dataKey="EPF" stackId="1" stroke="#334155" fill="#94a3b8" />
-          <Area type="monotone" dataKey="NPS" stackId="1" stroke="#1e3a8a" fill="#93c5fd" />
-          <Area type="monotone" dataKey="Gratuity" stackId="1" stroke="#78350f" fill="#fcd34d" />
+          <YAxis
+            tick={{ fontSize: 11, fill: "#64748B" }}
+            axisLine={false}
+            tickLine={false}
+            width={64}
+            tickFormatter={(v) => rupeesShort(Number(v))}
+          />
+          <Tooltip
+            formatter={(v) => formatINR(Number(v))}
+            labelFormatter={(a) => `Age ${a}`}
+            contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid rgba(22,40,58,0.15)" }}
+          />
+          <Legend wrapperStyle={{ fontSize: 12 }} />
+          <Area type="monotone" dataKey="EPF" stackId="1" stroke="#6D28D9" fill="#6D28D9" fillOpacity={0.35} />
+          <Area type="monotone" dataKey="NPS" stackId="1" stroke="#A78BFA" fill="#A78BFA" fillOpacity={0.35} />
+          <Area type="monotone" dataKey="Gratuity" stackId="1" stroke="#C27803" fill="#C27803" fillOpacity={0.3} />
         </AreaChart>
       </ResponsiveContainer>
     </div>

@@ -20,9 +20,13 @@
 //   above ₹12L: up to 80% lump sum. Premature exit: 20% lump sum, 80%
 //   annuity (full lump sum if corpus ≤ ₹5L). Only 60% of corpus is
 //   tax-exempt; the excess and all annuity income are taxable.
-// - Gratuity: 15/26 x last wage x years (part-year over 6 months rounds
-//   up); 5 years minimum, 1 year for fixed-term employees; payable and
-//   exempt up to ₹20 lakh.
+// - Gratuity: reuses computeGratuity() from gratuity.ts so this tool and
+//   the Gratuity Calculator always agree (15/26 x wage x years, 6+ months
+//   rounds up, 50% wage rule, 5 years / 1 year for fixed-term, exempt up
+//   to ₹20 lakh).
+// - LWF: uses the verified Sanity rule for the user's state through
+//   estimateLwf() from lib/compliance/lwf.ts (same logic as the LWF
+//   Calculator), or the user's payslip amounts if no verified rule.
 // - Leave encashment at retirement: exempt up to ₹25 lakh (also limited
 //   to 10 months' salary and 30 days per year of service).
 // - EPF interest on employee contributions above ₹2.5 lakh a year is
@@ -41,7 +45,9 @@ import {
   type TaxRegime,
 } from "@/lib/calculators/retirementTax";
 import { computeEsi, esiWage, type EsiWageBasis } from "@/lib/calculators/esi";
-import { computeLwf, type LwfFrequency } from "@/lib/calculators/lwf";
+import { computeGratuity, GRATUITY_EXEMPTION_CAP } from "@/lib/calculators/gratuity";
+import { estimateLwf, CYCLES_PER_YEAR } from "@/lib/compliance/lwf";
+import type { LwfFrequency, LwfRule } from "@/lib/compliance/types";
 
 // ---------------------------------------------------------------- constants
 
@@ -49,7 +55,6 @@ export const DEFAULT_EPF_RATE = 8.25;
 export const EPS_EXIT_AGE = 58;
 export const EPS_MIN_PENSION = 1000;
 export const EPS_MAX_SERVICE = 35;
-export const GRATUITY_CAP = 2000000;
 export const LEAVE_ENCASHMENT_EXEMPT_CAP = 2500000;
 export const PF_INTEREST_TAX_THRESHOLD = 250000;
 export const EMPLOYER_CONTRIBUTION_PERQ_LIMIT = 750000;
@@ -100,8 +105,9 @@ export interface RetirementInputs {
 
   leaveDaysAtRetirement: number;
 
-  stateCode: string;
+  stateSlug: string; // matches lib/compliance/states.ts
   ptMonthly: number;
+  lwfSource: "verified" | "manual";
   lwfEmployee: number;
   lwfEmployer: number;
   lwfFrequency: LwfFrequency;
@@ -150,8 +156,9 @@ export const DEFAULT_INPUTS: RetirementInputs = {
   existingNpsBalance: 0,
   npsLumpSumPct: 60,
   leaveDaysAtRetirement: 0,
-  stateCode: "KA",
+  stateSlug: "karnataka",
   ptMonthly: 200,
+  lwfSource: "verified",
   lwfEmployee: 0,
   lwfEmployer: 0,
   lwfFrequency: "yearly",
@@ -275,7 +282,13 @@ export interface RetirementResult {
     monthsCovered: number;
     exitAge: number | null;
   };
-  lwfAnnual: { employee: number; employer: number };
+  lwf: {
+    source: "verified" | "manual";
+    covered: boolean;
+    reason?: string;
+    employeeAnnual: number; // this year
+    employerAnnual: number;
+  };
   timeline: TimelinePoint[];
   warnings: string[];
 }
@@ -311,16 +324,6 @@ function toIsoDate(d: Date): string {
 
 function clamp(n: number, lo: number, hi: number): number {
   return Math.min(hi, Math.max(lo, n));
-}
-
-// Gratuity counts a part-year above six months as a full year.
-function gratuityYears(years: number): number {
-  const whole = Math.floor(years);
-  return years - whole > 0.5 ? whole + 1 : whole;
-}
-
-function gratuityAmount(lastMonthlyWage: number, years: number): number {
-  return Math.min(GRATUITY_CAP, Math.round((15 / 26) * lastMonthlyWage * years));
 }
 
 function tableDFactor(serviceYears: number): number {
@@ -418,10 +421,17 @@ export function deriveSalary(inputs: RetirementInputs): SalaryBase {
 
 // ------------------------------------------------------------------- engine
 
+export interface CalculateOptions {
+  asOf?: Date; // defaults to today; tests pass a fixed date
+  lwfRule?: LwfRule | null; // verified Sanity rule for inputs.stateSlug
+}
+
 export function calculateRetirement(
   inputs: RetirementInputs,
-  asOf: Date = new Date()
+  options: CalculateOptions = {}
 ): RetirementResult {
+  const asOf = options.asOf ?? new Date();
+  const lwfRule = options.lwfRule ?? null;
   const warnings: string[] = [];
   const today = new Date(asOf.getFullYear(), asOf.getMonth(), asOf.getDate());
 
@@ -449,11 +459,39 @@ export function calculateRetirement(
       ? Math.max(inputs.trustRatePct, inputs.epfRatePct)
       : inputs.epfRatePct) / 100;
   const npsMonthlyRate = Math.pow(1 + inputs.npsReturnPct / 100, 1 / 12) - 1;
-  const lwf = computeLwf({
-    employeeAmount: inputs.lwfEmployee,
-    employerAmount: inputs.lwfEmployer,
-    frequency: inputs.lwfFrequency,
-  });
+  // LWF for one year at a given monthly gross. Verified rule if we have
+  // one; otherwise the payslip amounts the user entered.
+  const useVerifiedLwf = inputs.lwfSource === "verified" && lwfRule !== null;
+  const lwfYear = (monthlyGross: number) => {
+    if (useVerifiedLwf && lwfRule) {
+      // An individual can't know their employer's headcount, so assume the
+      // establishment meets any minimum-headcount rule.
+      const est = estimateLwf(lwfRule, {
+        monthlyWage: monthlyGross,
+        headcount: Math.max(1, lwfRule.minEmployees ?? 1),
+      });
+      return {
+        covered: est.covered,
+        reason: est.reason,
+        employee: est.perEmployeeYear.employee,
+        employer: est.perEmployeeYear.employer,
+      };
+    }
+    const cycles = CYCLES_PER_YEAR[inputs.lwfFrequency];
+    const employee = Math.max(0, inputs.lwfEmployee) * cycles;
+    const employer = Math.max(0, inputs.lwfEmployer) * cycles;
+    return { covered: employee + employer > 0, reason: undefined as string | undefined, employee, employer };
+  };
+  const lwfNow = lwfYear(base.gross);
+
+  const gratuityCategory = inputs.isFixedTerm ? "fixedTerm" : "permanent";
+  const gratuityAt = (m: number, years: number) =>
+    computeGratuity({
+      basicPlusDA: basicDAAt(m),
+      totalMonthlyRemuneration: inputs.applyWageRule ? grossAt(m) : 0,
+      yearsOfService: years,
+      employmentCategory: gratuityCategory,
+    });
 
   // --- running state
   let epfBalance = Math.max(0, inputs.existingEpfBalance);
@@ -480,11 +518,8 @@ export function calculateRetirement(
   const careerYearsBefore =
     inputs.mode === "simple" ? inputs.yearsAtEmployer : inputs.totalCareerYears;
 
-  const gratuityAccruedAt = (m: number): number => {
-    const yrs = inputs.yearsAtEmployer + m / 12;
-    const minYears = inputs.isFixedTerm ? 1 : 5;
-    return yrs >= minYears ? gratuityAmount(wageAt(m), gratuityYears(yrs)) : 0;
-  };
+  const gratuityAccruedAt = (m: number): number =>
+    Math.round(gratuityAt(m, inputs.yearsAtEmployer + m / 12).gratuityAmount);
 
   const pushTimeline = (m: number) => {
     timeline.push({
@@ -540,6 +575,9 @@ export function calculateRetirement(
     const npsEmployee = Math.max(0, inputs.npsVoluntaryMonthly);
     npsBalance = npsBalance * (1 + npsMonthlyRate) + npsEmployer + npsEmployee;
 
+    // LWF (wage bands can change as salary grows)
+    const lwf = lwfYear(gross);
+
     // ESI
     const esi = computeEsi({
       wage: esiWage(basicDA, gross, inputs.esiWageBasis),
@@ -562,8 +600,8 @@ export function calculateRetirement(
       esiEmployee: esi.employee,
       esiEmployer: esi.employer,
       pt: Math.max(0, inputs.ptMonthly),
-      lwfEmployee: lwf.employeeAnnual / 12,
-      lwfEmployer: lwf.employerAnnual / 12,
+      lwfEmployee: lwf.employee / 12,
+      lwfEmployer: lwf.employer / 12,
     };
     if (m === 0) monthlyNow = { ...row };
     (Object.keys(totals) as (keyof MonthlyContributions)[]).forEach((k) => {
@@ -606,8 +644,8 @@ export function calculateRetirement(
       esiEmployee: esi.employee,
       esiEmployer: esi.employer,
       pt: Math.max(0, inputs.ptMonthly),
-      lwfEmployee: lwf.employeeAnnual / 12,
-      lwfEmployer: lwf.employerAnnual / 12,
+      lwfEmployee: lwfNow.employee / 12,
+      lwfEmployer: lwfNow.employer / 12,
     };
     warnings.push("Your retirement date is today or already past, so no projection was run.");
   }
@@ -723,11 +761,11 @@ export function calculateRetirement(
   // -------------------------------------------------------- gratuity
   const stayYears = inputs.yearsAtEmployer + yearsToRet;
   const minGratuityYears = inputs.isFixedTerm ? 1 : 5;
-  const gratuityEligible = stayYears >= minGratuityYears;
-  const gYears = gratuityEligible ? gratuityYears(stayYears) : 0;
-  const lastWage = Math.round(wageAt(lastM));
+  const stay = gratuityAt(lastM, stayYears);
+  const stayGratuity = Math.round(stay.gratuityAmount);
 
-  // Job-switch mode: switch every N years from today.
+  // Job-switch mode: switch every N years from today. The first stint
+  // includes time already served with the current employer.
   const jobSwitchEnabled = inputs.jobSwitchEveryYears > 0;
   const stints: { years: number; amount: number }[] = [];
   if (jobSwitchEnabled) {
@@ -737,34 +775,29 @@ export function calculateRetirement(
     while (startM < months) {
       const endM = Math.min(months, startM + stepMonths);
       const len = (endM - startM) / 12 + (firstStint ? inputs.yearsAtEmployer : 0);
-      const eligible = len >= minGratuityYears;
-      const amount = eligible
-        ? gratuityAmount(wageAt(Math.max(0, endM - 1)), gratuityYears(len))
-        : 0;
-      stints.push({ years: Math.round(len * 10) / 10, amount });
+      const g = gratuityAt(Math.max(0, endM - 1), len);
+      stints.push({ years: Math.round(len * 10) / 10, amount: Math.round(g.gratuityAmount) });
       startM = endM;
       firstStint = false;
     }
   }
   const switchTotal = stints.reduce((a, s) => a + s.amount, 0);
+  const lastStint = stints[stints.length - 1];
 
-  const gratuityPaid = jobSwitchEnabled
-    ? stints.length > 0
-      ? stints[stints.length - 1].amount
-      : 0
-    : gratuityEligible
-      ? gratuityAmount(lastWage, gYears)
-      : 0;
-  const stayGratuity = gratuityEligible ? gratuityAmount(lastWage, gYears) : 0;
-  const gratuityExempt = Math.min(gratuityPaid, GRATUITY_CAP);
+  const finalGratuity = jobSwitchEnabled
+    ? gratuityAt(lastM, lastStint ? lastStint.years : 0)
+    : stay;
+  const gratuityPaid = Math.round(finalGratuity.gratuityAmount);
+  const gratuityExempt = Math.min(gratuityPaid, GRATUITY_EXEMPTION_CAP);
   const gratuityTaxable = gratuityPaid - gratuityExempt;
+  const lastWage = Math.round(finalGratuity.effectiveWageBase);
 
-  if (!jobSwitchEnabled && !gratuityEligible) {
+  if (!jobSwitchEnabled && !stay.eligibleForGratuity) {
     warnings.push(
       `You'll have ${stayYears.toFixed(1)} years with this employer at retirement, below the ${minGratuityYears}-year minimum, so no gratuity is payable.`
     );
   }
-  if (jobSwitchEnabled && stints.some((s) => s.amount === 0)) {
+  if (jobSwitchEnabled && stints.some((st) => st.amount === 0)) {
     warnings.push(
       "Some job stints in your switch pattern are too short for gratuity. Each switch before 5 years resets the gratuity clock."
     );
@@ -775,7 +808,7 @@ export function calculateRetirement(
   const leaveDays = Math.max(0, inputs.leaveDaysAtRetirement);
   const leaveAmount = Math.round((finalBasicDA / 30) * leaveDays);
   const completedYearsWithEmployer = Math.floor(
-    jobSwitchEnabled ? stints[stints.length - 1]?.years ?? 0 : stayYears
+    jobSwitchEnabled ? lastStint?.years ?? 0 : stayYears
   );
   const leaveDaysAllowed = Math.min(leaveDays, 30 * completedYearsWithEmployer);
   const leaveExempt = Math.min(
@@ -870,8 +903,8 @@ export function calculateRetirement(
       postTaxMonthly: npsPostTax,
     },
     gratuity: {
-      eligible: jobSwitchEnabled ? gratuityPaid > 0 : gratuityEligible,
-      years: jobSwitchEnabled ? stints[stints.length - 1]?.years ?? 0 : gYears,
+      eligible: finalGratuity.eligibleForGratuity,
+      years: finalGratuity.roundedYears,
       lastWage,
       amount: gratuityPaid,
       exempt: gratuityExempt,
@@ -910,7 +943,13 @@ export function calculateRetirement(
       monthsCovered: esiMonths,
       exitAge: esiExitAge,
     },
-    lwfAnnual: { employee: lwf.employeeAnnual, employer: lwf.employerAnnual },
+    lwf: {
+      source: useVerifiedLwf ? "verified" : "manual",
+      covered: lwfNow.covered,
+      reason: lwfNow.reason,
+      employeeAnnual: Math.round(lwfNow.employee),
+      employerAnnual: Math.round(lwfNow.employer),
+    },
     timeline,
     warnings,
   };

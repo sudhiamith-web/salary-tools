@@ -33,6 +33,12 @@ export const tools: ToolMeta[] = [
     category: "Salary & Tax",
   },
   {
+    slug: "retirement-benefits-calculator",
+    name: "Retirement Benefits & Deductions Calculator",
+    shortDesc: "PF, EPS, NPS, gratuity, ESI, LWF and PT: what you pay and what comes back.",
+    category: "Salary & Tax",
+  },
+  {
     slug: "advance-tax-calculator",
     name: "Advance Tax Calculator",
     shortDesc: "Check your quarterly installments and 234B/234C penalties.",
@@ -117,6 +123,12 @@ export const tools: ToolMeta[] = [
     category: "Compliance & PF",
   },
   {
+    slug: "esi-calculator",
+    name: "ESI Calculator & Benefits",
+    shortDesc: "Check ESI coverage under the Labour Code wage rule and what ESI covers.",
+    category: "Compliance & PF",
+  },
+  {
     slug: "minimum-wage-checker",
     name: "Minimum Wage Checker",
     shortDesc: "Check a salary against your state's minimum wage, incl. the 50% rule.",
@@ -126,6 +138,12 @@ export const tools: ToolMeta[] = [
     slug: "lwf-calculator",
     name: "LWF Calculator",
     shortDesc: "Labour Welfare Fund cost by state: deductions, employer share, due dates.",
+    category: "Compliance & PF",
+  },
+  {
+    slug: "lwf-benefits",
+    name: "Labour Welfare Fund Benefits",
+    shortDesc: "What your LWF deduction funds and how to apply for the schemes.",
     category: "Compliance & PF",
   },
 ];

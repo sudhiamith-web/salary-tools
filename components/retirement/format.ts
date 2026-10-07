@@ -1,19 +1,18 @@
-// Number formatting for the retirement and statutory tools.
+// Formatting helpers for the retirement tools. Full amounts use the
+// site-wide formatINR from salary.ts; this adds a short form for charts
+// and big totals.
 
-const inr = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
+import { formatINR } from "@/lib/calculators/salary";
 
-export function rupees(value: number): string {
-  const sign = value < 0 ? "-" : "";
-  return `${sign}₹${inr.format(Math.round(Math.abs(value)))}`;
-}
+export { formatINR };
 
-// Short form for large amounts: ₹1.25 Cr, ₹48.6 L.
+// ₹1.25 Cr, ₹48.6 L, or the full amount below ₹1 lakh.
 export function rupeesShort(value: number): string {
   const abs = Math.abs(value);
   const sign = value < 0 ? "-" : "";
   if (abs >= 10000000) return `${sign}₹${(abs / 10000000).toFixed(2)} Cr`;
   if (abs >= 100000) return `${sign}₹${(abs / 100000).toFixed(1)} L`;
-  return rupees(value);
+  return formatINR(value);
 }
 
 export function years(value: number): string {

@@ -1,7 +1,8 @@
 "use client";
 
-// One output line with an expandable "How is this calculated?" note.
-// tone: "gain" uses the ledger token, "loss" uses rust (financial meaning only).
+// A .ledger-row (label ⋯⋯ value) with an optional sub-line and an
+// expandable "How is this calculated?" note.
+// tone: "gain" → text-ledger, "loss" → text-rust (financial meaning only).
 
 import type { ReactNode } from "react";
 
@@ -18,21 +19,19 @@ export function ResultLine({
   how?: ReactNode;
   tone?: "gain" | "loss" | "neutral";
 }) {
-  const color =
-    tone === "gain" ? "text-ledger" : tone === "loss" ? "text-rust" : "text-slate-900";
+  const toneCls = tone === "gain" ? "text-ledger" : tone === "loss" ? "text-rust" : "";
   return (
-    <div className="border-b border-slate-200 py-3 last:border-b-0">
-      <div className="flex items-baseline justify-between gap-4">
-        <span className="text-sm text-slate-700">{label}</span>
-        <span className={`text-right text-base font-semibold tabular-nums ${color}`}>{value}</span>
+    <div>
+      <div className="ledger-row">
+        <span className="label">{label}</span>
+        <span className="fill" />
+        <span className={`value ${toneCls}`}>{value}</span>
       </div>
-      {sub && <div className="mt-0.5 text-xs text-slate-500">{sub}</div>}
+      {sub && <p className="text-xs text-charcoal/50 -mt-1 mb-1">{sub}</p>}
       {how && (
-        <details className="mt-1 text-xs text-slate-600 print:hidden">
-          <summary className="cursor-pointer select-none text-slate-500 hover:text-slate-800">
-            How is this calculated?
-          </summary>
-          <div className="mt-1 space-y-1 leading-relaxed">{how}</div>
+        <details className="text-xs text-charcoal/60 mb-2 print:hidden">
+          <summary className="cursor-pointer text-accent hover:text-accentDark">How is this calculated?</summary>
+          <div className="mt-1.5 space-y-1.5 leading-relaxed">{how}</div>
         </details>
       )}
     </div>

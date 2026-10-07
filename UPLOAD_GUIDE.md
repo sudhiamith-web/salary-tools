@@ -1,41 +1,49 @@
-# Upload guide: Retirement, ESI and LWF tools
+# Upload guide: revised Retirement, ESI and LWF tools
 
-Three new pages, 14 new files. Nothing existing is changed except one edit to `lib/tools.ts`.
+This revision fits the three tools into the existing codebase: shared components, the standard page layout, verified LWF data from Sanity, and the existing gratuity and tax logic.
 
-Your existing `lib/calculators/epfWageCeiling.ts` is reused as-is. Do not replace it.
+## Step 1: delete these files from the repo
 
-## Set 1: drag-and-drop safe (no brackets in the path)
-
-Upload each folder's files into the matching folder in the repo.
-
-| Repo folder | Files |
+| File | Why |
 |---|---|
-| `lib/calculators/` | `retirementBenefits.ts`, `retirementTax.ts`, `esi.ts`, `lwf.ts`, `retirementShare.ts` |
-| `lib/data/` | `stateDeductions.ts` |
-| `components/retirement/` | `RetirementCalculator.tsx`, `fields.tsx`, `ResultLine.tsx`, `TimelineChart.tsx`, `format.ts` |
-| `components/statutory/` | `EsiMiniCalculator.tsx`, `LwfMiniCalculator.tsx`, `PageFaq.tsx` |
-| `app/tools/retirement-benefits-calculator/` | `page.tsx` |
-| `app/tools/esi-calculator/` | `page.tsx` |
-| `app/tools/lwf-benefits/` | `page.tsx` |
+| `TOOLS_REGISTRY_SNIPPET.ts` (repo root) | **Breaks `next build`.** It isn't valid TypeScript, and `tsconfig.json` includes every `.ts` file. |
+| `CODE_EXPLANATION.md` (repo root) | Replaced by `docs/13-retirement-esi-lwf-tools.md`. |
+| `UPLOAD_GUIDE.md` (repo root) | The old guide. Don't commit this one either. |
+| `lib/calculators/lwf.ts` | Replaced by the existing `lib/compliance/lwf.ts`. |
+| `lib/data/stateDeductions.ts` | Replaced by the existing `lib/compliance/states.ts`. |
+| `components/statutory/LwfMiniCalculator.tsx` | The LWF page no longer has its own calculator. |
+| `components/statutory/PageFaq.tsx` | Replaced by the existing `FAQAccordion`. |
 
-None of these paths contain brackets, so drag-and-drop works. If GitHub flattens a folder, use "Create new file" and type the full path.
+In the GitHub web UI: open each file, then use the "…" menu and choose "Delete file".
 
-## Set 2: manual edit
+## Step 2: upload these files (all drag-and-drop safe; no brackets in the paths)
 
-Open `lib/tools.ts` and add the three entries from `TOOLS_REGISTRY_SNIPPET.ts`. Rename the fields to match your existing entries. The main calculator goes under "Salary & Tax"; ESI and LWF go under "Compliance & PF" next to the EPF wage ceiling tool. Move them if you prefer.
+| Repo folder | Files | New or replaced |
+|---|---|---|
+| `lib/` | `tools.ts` | Replaced (adds the 3 tools) |
+| `lib/calculators/` | `retirementBenefits.ts`, `retirementTax.ts` | Replaced |
+| `components/retirement/` | `RetirementCalculator.tsx`, `fields.tsx`, `ResultLine.tsx`, `TimelineChart.tsx`, `format.ts` | Replaced |
+| `components/statutory/` | `EsiMiniCalculator.tsx` | Replaced |
+| `app/tools/retirement-benefits-calculator/` | `page.tsx` | Replaced |
+| `app/tools/esi-calculator/` | `page.tsx` | Replaced |
+| `app/tools/lwf-benefits/` | `page.tsx` | Replaced |
+| `docs/` | `13-retirement-esi-lwf-tools.md` | New |
 
-## Check after deploy
+These files are unchanged and stay as they are: `lib/calculators/esi.ts`, `lib/calculators/retirementShare.ts`.
 
-1. `/tools/retirement-benefits-calculator` loads, and changing CTC updates the numbers.
-2. "Copy share link" copies a URL with `?s=`. Opening it in a private window restores the inputs.
-3. "Download PDF summary" opens the print dialog with inputs hidden.
-4. `/tools/esi-calculator` and `/tools/lwf-benefits` load, and their links to each other work.
-5. Run the Rich Results Test on all three URLs to confirm FAQPage markup.
+Do Step 1 and Step 2 in the same session. Uploading `tools.ts` is what makes the three tools public (nav, homepage, sitemap, related tools).
 
-## Things that depend on your setup
+## Step 3: check after deploy
 
-- **Colour tokens.** Gains use `text-ledger` and losses use `text-rust`. If your Tailwind theme names them differently, find-and-replace in `ResultLine.tsx` and `RetirementCalculator.tsx`.
-- **Shared components.** These pages use small local components for fields, FAQ and breadcrumb because I don't have your shared components' props. Paste `SliderField`, `FAQAccordion`, `Breadcrumb`, `RelatedTools` and `InsightBanner` and I'll switch the pages to them to match the standard template.
-- **Canonical URLs.** `alternates.canonical` is a relative path and needs `metadataBase` in your root layout. If you don't have it, use the full `https://salary-tools.com/...` URL.
-- **`/tools` and `/lwf-rates` links.** The breadcrumb links to `/tools` and the LWF page links to `/lwf-rates`. Change these if those routes don't exist yet.
-- **LWF and PT amounts.** These are manual inputs for now. Once your Sanity LWF schema is final, share its field names and I'll fetch verified rates by state.
+1. **Retirement calculator** (`/tools/retirement-benefits-calculator`):
+   - Changing CTC updates the result card.
+   - Pick a state with a verified LWF rule: the LWF box shows the "Checked against the official notification" badge and yearly amounts.
+   - Pick an unverified state: it asks for payslip amounts.
+   - The insight banner shows a VPF figure, and its button switches to detailed mode with +2% VPF.
+2. **Share and print:** "Copy share link" works in a private window, and "Download PDF summary" prints only the results.
+3. **ESI page** (`/tools/esi-calculator`): moving Gross above ₹42,000 with Basic + DA at ₹10,000 shows "Not covered".
+4. **LWF benefits page** (`/tools/lwf-benefits`): the state table lists your verified states and links to `/lwf-rates/[state]`.
+5. **Navigation and SEO:**
+   - The nav dropdowns show the retirement tool under Salary & Tax, and ESI and LWF benefits under Compliance & PF.
+   - `/sitemap.xml` lists all three URLs.
+   - The Rich Results Test passes FAQPage on all three.
