@@ -2,7 +2,7 @@ export interface ToolMeta {
   slug: string;
   name: string;
   shortDesc: string;
-  category: "Salary & Tax" | "Compliance & PF";
+  category: "Salary & Tax" | "Compliance & PF" | "Investor Tax & Money" | "For HR & Payroll";
 }
 
 // Only LIVE tools belong here. Unbuilt/planned tools are tracked
@@ -145,6 +145,42 @@ export const tools: ToolMeta[] = [
     name: "Labour Welfare Fund Benefits",
     shortDesc: "What your LWF deduction funds and how to apply for the schemes.",
     category: "Compliance & PF",
+  },
+  {
+    slug: "epf-vpf-ppf-nps-mutual-fund-calculator",
+    name: "EPF vs VPF vs PPF vs NPS vs Mutual Fund",
+    shortDesc: "Compare all five after tax, old or new regime.",
+    category: "Investor Tax & Money",
+  },
+  {
+    slug: "labour-code-salary-structure-checker",
+    name: "Labour Code Salary Structure Checker",
+    shortDesc: "Test a CTC against the 50% wage rule; PF and gratuity impact.",
+    category: "For HR & Payroll",
+  },
+  {
+    slug: "full-and-final-settlement-calculator",
+    name: "Full & Final Settlement Calculator",
+    shortDesc: "Final pay, leave encashment, gratuity, recoveries and due date.",
+    category: "For HR & Payroll",
+  },
+  {
+    slug: "statutory-bonus-calculator",
+    name: "Statutory Bonus Calculator",
+    shortDesc: "₹21,000 eligibility, 8.33%–20% bonus and the payment deadline.",
+    category: "For HR & Payroll",
+  },
+  {
+    slug: "payroll-compliance-calendar",
+    name: "Payroll Compliance Calendar",
+    shortDesc: "PF, ESI, TDS, PT and LWF due dates by state, with .ics export.",
+    category: "For HR & Payroll",
+  },
+  {
+    slug: "salary-increment-planner",
+    name: "Salary Increment Planner",
+    shortDesc: "Merit matrix, budget vs plan, and extra PF and gratuity cost.",
+    category: "For HR & Payroll",
   },
 ];
 
