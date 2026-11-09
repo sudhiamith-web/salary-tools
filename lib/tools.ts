@@ -182,6 +182,14 @@ export const tools: ToolMeta[] = [
     shortDesc: "Merit matrix, budget vs plan, and extra PF and gratuity cost.",
     category: "For HR & Payroll",
   },
+
+  {
+    slug: "car-lease-tax-calculator",
+    name: "Car Lease Tax Benefit Calculator",
+    shortDesc: "Tax saved on a company car lease, buy-back tax, and lease vs buy.",
+    category: "Salary & Tax",
+  },
+
 ];
 
 // Same-category tools first, then the rest, so compliance tools link to each
